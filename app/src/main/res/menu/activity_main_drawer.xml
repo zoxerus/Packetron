@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <item android:title="@string/nav_title_udp">
+        <menu>
+            <item
+                android:id="@+id/nav_udp_send_receive"
+                android:icon="@drawable/ic_send_receive"
+                android:title="@string/menu_udp_send_receive" />
+            <item
+                android:id="@+id/nav_udp_send"
+                android:icon="@drawable/ic_send"
+                android:title="@string/menu_udp_send" />
+            <item
+                android:id="@+id/nav_udp_receive"
+                android:icon="@drawable/ic_receive"
+                android:title="@string/menu_udp_receive" />
+        </menu>
+
+    </item>
+
+</menu>
