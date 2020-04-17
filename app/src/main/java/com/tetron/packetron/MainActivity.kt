@@ -9,6 +9,7 @@ import android.os.Handler
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.GravityCompat
@@ -16,12 +17,15 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
+import androidx.fragment.app.viewModels
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import com.google.android.material.navigation.NavigationView
 import com.tetron.packetron.ui.tcp_server.TCPServerFragment
+import com.tetron.packetron.ui.udp_send_receive.UDPConnectionDialog
 import com.tetron.packetron.ui.udp_send_receive.UDPSendReceiveFragment
+import com.tetron.packetron.ui.udp_send_receive.UDPViewModel
 import java.net.InetAddress
 import java.net.UnknownHostException
 
@@ -37,6 +41,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
     private var udpSendReceiveFragment: UDPSendReceiveFragment? = null
     private var tcpServerFragment: TCPServerFragment? = null
+
+    private val udpViewModel: UDPViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,7 +79,7 @@ class MainActivity : AppCompatActivity() {
         //navView.setupWithNavController(navController)
 
         udpSendReceiveFragment =
-            UDPSendReceiveFragment.newInstance()
+            UDPSendReceiveFragment.newInstance(udpViewModel)
 
         supportFragmentManager.beginTransaction()
             .replace(R.id.nav_host_fragment, udpSendReceiveFragment!!, UDP_FRAGMENT_TAG)
@@ -94,7 +100,7 @@ class MainActivity : AppCompatActivity() {
                 else -> {
                     fragmentTag = UDP_FRAGMENT_TAG
                     if (udpSendReceiveFragment == null) udpSendReceiveFragment =
-                        UDPSendReceiveFragment.newInstance()
+                        UDPSendReceiveFragment.newInstance(udpViewModel)
                     fragment = udpSendReceiveFragment
                 }
             }
@@ -137,7 +143,12 @@ class MainActivity : AppCompatActivity() {
             R.id.action_view_local_ip -> {
                 val fmd = FireMissilesDialogFragment()
                 fmd.setIpAddress(getIpAddress(this)!!)
-                fmd.showNow(supportFragmentManager, "sesx")
+                fmd.showNow(supportFragmentManager, "IP Dialog")
+            }
+            R.id.action_connect -> {
+                val udpConnectionDialog = UDPConnectionDialog(udpViewModel)
+                udpConnectionDialog.showNow(supportFragmentManager,"Connection Dialog")
+
             }
         }
 
