@@ -17,7 +17,6 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
-import androidx.fragment.app.viewModels
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
@@ -141,14 +140,13 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.action_view_local_ip -> {
-                val fmd = FireMissilesDialogFragment()
+                val fmd = ShowIpDialog()
                 fmd.setIpAddress(getIpAddress(this)!!)
                 fmd.showNow(supportFragmentManager, "IP Dialog")
             }
             R.id.action_connect -> {
                 val udpConnectionDialog = UDPConnectionDialog(udpViewModel)
                 udpConnectionDialog.showNow(supportFragmentManager,"Connection Dialog")
-
             }
         }
 
@@ -204,7 +202,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    class FireMissilesDialogFragment : DialogFragment() {
+    class ShowIpDialog : DialogFragment() {
         var ipAdrs: String = ""
         fun setIpAddress(ip: String) {
             this.ipAdrs = ip
