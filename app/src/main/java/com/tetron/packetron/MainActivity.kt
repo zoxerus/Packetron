@@ -22,7 +22,6 @@ import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.navigateUp
 import com.google.android.material.navigation.NavigationView
 import com.tetron.packetron.ui.tcp_server.TCPServerFragment
-import com.tetron.packetron.ui.udp_send_receive.UDPConnectionDialog
 import com.tetron.packetron.ui.udp_send_receive.UDPSendReceiveFragment
 import com.tetron.packetron.ui.udp_send_receive.UDPViewModel
 import java.net.InetAddress
@@ -30,10 +29,8 @@ import java.net.UnknownHostException
 
 
 const val LOG_TAG = "Main Activity"
-const val UDP_FRAGMENT_TAG = "UDP_Fragment"
-const val TCP_SERVER_FRAGMENT_TAG = "TCP_Server_Fragment"
-const val TCP_CLIENT_FRAGMENT_TAG = "UDP Receive"
-
+const val UDP_FRAGMENT_TAG = "UDP Sender Receiver"
+const val TCP_SERVER_FRAGMENT_TAG = "TCP Server"
 
 class MainActivity : AppCompatActivity() {
 
@@ -47,12 +44,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-/*        if (savedInstanceState != null) {
-            //Restore the fragment's instance
-            udpSendReceiveFragment = supportFragmentManager
-                .getFragment(savedInstanceState, "myFragmentName") as UDPSendReceiveFragment
-        }*/
-
         Log.e(LOG_TAG, "Main Activity Created")
 
         val toolbar: Toolbar = findViewById(R.id.toolbar)
@@ -61,21 +52,6 @@ class MainActivity : AppCompatActivity() {
         val drawerLayout: DrawerLayout = findViewById(R.id.drawer_layout)
         val navView: NavigationView = findViewById(R.id.nav_view)
 
-
-        // val navController = findNavController(R.id.nav_host_fragment)
-
-
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
-/*        appBarConfiguration = AppBarConfiguration(
-            setOf(
-                R.id.nav_udp_send_receive, R.id.nav_udp_send, R.id.nav_udp_receive
-            ), drawerLayout
-        )*/
-
-
-        //setupActionBarWithNavController(navController, appBarConfiguration)
-        //navView.setupWithNavController(navController)
 
         udpSendReceiveFragment =
             UDPSendReceiveFragment.newInstance(udpViewModel)
@@ -144,10 +120,10 @@ class MainActivity : AppCompatActivity() {
                 fmd.setIpAddress(getIpAddress(this)!!)
                 fmd.showNow(supportFragmentManager, "IP Dialog")
             }
-            R.id.action_connect -> {
+/*            R.id.action_connect -> {
                 val udpConnectionDialog = UDPConnectionDialog(udpViewModel)
                 udpConnectionDialog.showNow(supportFragmentManager,"Connection Dialog")
-            }
+            }*/
         }
 
         return super.onOptionsItemSelected(item)

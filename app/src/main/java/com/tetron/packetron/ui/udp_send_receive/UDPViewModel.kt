@@ -12,9 +12,7 @@ class UDPViewModel : ViewModel() {
     var responses: ArrayList<String> = ArrayList()
 
     val responsesLive: MutableLiveData<ArrayList<String>> by lazy {
-        MutableLiveData<ArrayList<String>>().also {
-            loadResponses()
-        }
+        MutableLiveData<ArrayList<String>>()
     }
 
     fun loadResponses() {

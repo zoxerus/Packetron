@@ -5,9 +5,7 @@ import android.content.SharedPreferences
 import android.os.AsyncTask
 import android.os.Bundle
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
@@ -33,6 +31,8 @@ class UDPSendReceiveFragment(vm: UDPViewModel) : Fragment() {
     private lateinit var viewAdapter: RecyclerView.Adapter<*>
     private lateinit var viewManager: RecyclerView.LayoutManager
 
+    constructor() : this(UDPViewModel())
+
     companion object {
         fun newInstance(vm: UDPViewModel): UDPSendReceiveFragment {
             return UDPSendReceiveFragment(vm)
@@ -40,6 +40,8 @@ class UDPSendReceiveFragment(vm: UDPViewModel) : Fragment() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+
+        retainInstance = true
         setHasOptionsMenu(true)
         super.onCreate(savedInstanceState)
     }
@@ -65,6 +67,8 @@ class UDPSendReceiveFragment(vm: UDPViewModel) : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+
 
 
         responseRecyclerView = view.findViewById(R.id.response_recycler_view)
@@ -96,6 +100,7 @@ class UDPSendReceiveFragment(vm: UDPViewModel) : Fragment() {
         send_button.setOnClickListener {
             val message = message_to_send.text.toString()
             SendPacketAsyncTask().execute(udpViewModel.remoteIp, udpViewModel.remotePort, message)
+            message_to_send.text = null
         }
     }
 
@@ -106,6 +111,24 @@ class UDPSendReceiveFragment(vm: UDPViewModel) : Fragment() {
             Log.e(LOG_TAG, "instance saved")
         }
 
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        super.onCreateOptionsMenu(menu, inflater)
+        menu.findItem(R.id.action_connect).isVisible = true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.action_connect -> {
+                val udpConnectionDialog = UDPConnectionDialog(udpViewModel)
+                udpConnectionDialog.showNow(
+                    requireActivity().supportFragmentManager,
+                    "Connection Dialog"
+                )
+            }
+        }
+        return super.onOptionsItemSelected(item)
     }
 
     override fun onPause() {
@@ -131,17 +154,28 @@ class UDPSendReceiveFragment(vm: UDPViewModel) : Fragment() {
                 val packet = DatagramPacket(msg, msg!!.size, receiverAddress, port)
                 if (udpViewModel.udpSocket != null && udpViewModel.udpSocket!!.isBound) {
                     udpViewModel.udpSocket?.send(packet)
+                } else {
+                    activity!!.runOnUiThread {
+                        Toast.makeText(
+                            activity,
+                            " Not Connected, Connect First",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                 }
                 return ""
 
             } catch (e: SocketTimeoutException) {
                 e.printStackTrace()
             } catch (e: Exception) {
-                Toast.makeText(
-                    activity,
-                    " Incorrect IP Address or Port unavailable ",
-                    Toast.LENGTH_LONG
-                ).show()
+                activity!!.runOnUiThread {
+                    Toast.makeText(
+                        activity,
+                        " Incorrect IP Address or Port unavailable ",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+
                 e.printStackTrace()
             }
             return ""

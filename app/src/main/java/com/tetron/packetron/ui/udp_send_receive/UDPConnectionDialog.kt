@@ -17,9 +17,13 @@ class UDPConnectionDialog(vm: UDPViewModel) : DialogFragment() {
     private val udpViewModel = vm
     private var dialogView: View? = null
 
+    constructor() : this(UDPViewModel())
+
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
+        retainInstance = true
         return activity?.let {
             dialogView = View.inflate(activity, R.layout.dialog_udp_connection, null)
+
             val builder = AlertDialog.Builder(it)
             builder.setTitle("UDP Connection")
             builder.setNegativeButton("Save") { _, _ ->
@@ -40,6 +44,8 @@ class UDPConnectionDialog(vm: UDPViewModel) : DialogFragment() {
             if (udpViewModel.udpSocket != null && udpViewModel.udpSocket!!.isBound) {
                 dialogView!!.button_connect.isChecked = true
             }
+
+
 
             connectToggle.setOnCheckedChangeListener { _, _ ->
                 if (udpViewModel.udpSocket != null && udpViewModel.udpSocket!!.isBound) {
@@ -90,4 +96,5 @@ class UDPConnectionDialog(vm: UDPViewModel) : DialogFragment() {
             builder.create()
         } ?: throw IllegalStateException("Activity cannot be null")
     }
+
 }

@@ -20,17 +20,7 @@ class TCPServerFragment : Fragment() {
         fun newInstance(): TCPServerFragment {
             return TCPServerFragment()
         }
-
-        fun addClient(client: TCPClientHandler) {
-            tcpClients.add(client)
-        }
-
-        fun removeClient(client: TCPClientHandler) {
-            tcpClients.remove(client)
-        }
     }
-
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -41,13 +31,10 @@ class TCPServerFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-
         val connectToggle: ToggleButton = view.findViewById(R.id.tcp_button_connect)
         connectToggle.text = getString(R.string.text_connect)
         connectToggle.textOff = getString(R.string.text_connect)
         connectToggle.textOn = getString(R.string.text_disconnect)
-
 
         connectToggle.setOnCheckedChangeListener { _, _ ->
             Log.e("TCP SERVER", " button changed status ")
