@@ -3,13 +3,16 @@ package com.tetron.packetron
 import android.app.AlertDialog
 import android.app.Dialog
 import android.content.Context
+import android.content.res.Configuration
 import android.net.wifi.WifiManager
 import android.os.Bundle
 import android.os.Handler
+import android.os.PersistableBundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import androidx.activity.viewModels
+import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.GravityCompat
@@ -17,9 +20,6 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
-import androidx.navigation.findNavController
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.navigateUp
 import com.google.android.material.navigation.NavigationView
 import com.tetron.packetron.ui.tcp_server.TCPServerFragment
 import com.tetron.packetron.ui.udp_send_receive.UDPSendReceiveFragment
@@ -34,11 +34,12 @@ const val TCP_SERVER_FRAGMENT_TAG = "TCP Server"
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var appBarConfiguration: AppBarConfiguration
     private var udpSendReceiveFragment: UDPSendReceiveFragment? = null
     private var tcpServerFragment: TCPServerFragment? = null
 
     private val udpViewModel: UDPViewModel by viewModels()
+
+    private lateinit var drawerToggle: ActionBarDrawerToggle
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,6 +52,18 @@ class MainActivity : AppCompatActivity() {
 
         val drawerLayout: DrawerLayout = findViewById(R.id.drawer_layout)
         val navView: NavigationView = findViewById(R.id.nav_view)
+
+
+        drawerToggle = object : ActionBarDrawerToggle(
+            this, drawerLayout, R.drawable.side_nav_bar,
+            R.drawable.side_nav_bar
+        ) {
+        }
+
+        toolbar.setNavigationIcon(R.drawable.ic_menu_black_24dp)
+        toolbar.setNavigationOnClickListener {
+            drawerLayout.openDrawer(GravityCompat.START)
+        }
 
 
         udpSendReceiveFragment =
@@ -107,6 +120,17 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    override fun onPostCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
+        super.onPostCreate(savedInstanceState, persistentState)
+        drawerToggle.syncState()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        drawerToggle.onConfigurationChanged(newConfig)
+    }
+
+
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
         menuInflater.inflate(R.menu.main, menu)
@@ -120,18 +144,9 @@ class MainActivity : AppCompatActivity() {
                 fmd.setIpAddress(getIpAddress(this)!!)
                 fmd.showNow(supportFragmentManager, "IP Dialog")
             }
-/*            R.id.action_connect -> {
-                val udpConnectionDialog = UDPConnectionDialog(udpViewModel)
-                udpConnectionDialog.showNow(supportFragmentManager,"Connection Dialog")
-            }*/
         }
 
         return super.onOptionsItemSelected(item)
-    }
-
-    override fun onSupportNavigateUp(): Boolean {
-        val navController = findNavController(R.id.nav_host_fragment)
-        return navController.navigateUp(appBarConfiguration) || super.onSupportNavigateUp()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -189,29 +204,11 @@ class MainActivity : AppCompatActivity() {
 
             builder.setMessage(ipAdrs)
                 .setNegativeButton("OK", null)
-            // Create the AlertDialog object and return it
+                .setTitle("IP Address")
             return builder.create()
         }
 
-/*
-        override fun onCreateDialog(savedInstanceState: Bundle): Dialog {
-            return activity?.let {
-                // Use the Builder class for convenient dialog construction
-                val builder = AlertDialog.Builder(it)
-                builder.setMessage("HEll")
-                    .setPositiveButton("aye",
-                        DialogInterface.OnClickListener { dialog, id ->
-                            // FIRE ZE MISSILES!
-                        })
-                    .setNegativeButton("OK",
-                        DialogInterface.OnClickListener { dialog, id ->
-                            // User cancelled the dialog
-                        })
-                // Create the AlertDialog object and return it
-                builder.create()
-            } ?: throw IllegalStateException("Activity cannot be null")
-        }
-*/
+
     }
 
 

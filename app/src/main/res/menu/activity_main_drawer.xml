@@ -12,11 +12,7 @@
             <item
                 android:id="@+id/nav_udp_send"
                 android:icon="@drawable/ic_send"
-                android:title="@string/menu_udp_send" />
-            <item
-                android:id="@+id/nav_udp_receive"
-                android:icon="@drawable/ic_receive"
-                android:title="@string/menu_udp_receive" />
+                android:title="@string/tcp_server" />
         </menu>
 
     </item>

@@ -6,12 +6,16 @@ import android.os.AsyncTask
 import android.os.Bundle
 import android.util.Log
 import android.view.*
+import android.widget.ArrayAdapter
+import android.widget.AutoCompleteTextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.tetron.packetron.ProtocolMessage
 import com.tetron.packetron.R
+import com.tetron.packetron.ui.MessageDialog
 import com.tetron.packetron.ui.ResponseAdapter
 import kotlinx.android.synthetic.main.fragment_udp_send_receive.*
 import java.net.DatagramPacket
@@ -31,6 +35,10 @@ class UDPSendReceiveFragment(vm: UDPViewModel) : Fragment() {
     private lateinit var viewAdapter: RecyclerView.Adapter<*>
     private lateinit var viewManager: RecyclerView.LayoutManager
 
+
+    private lateinit var addressAdapter: ArrayAdapter<String>
+    private lateinit var remoteHost: AutoCompleteTextView
+
     constructor() : this(UDPViewModel())
 
     companion object {
@@ -47,9 +55,17 @@ class UDPSendReceiveFragment(vm: UDPViewModel) : Fragment() {
     }
 
     override fun onResume() {
-        udpViewModel.remoteIp = ipPref!!.getString("remote_ip", "")
         udpViewModel.localPort = ipPref!!.getString("local_port", "33333")
-        udpViewModel.remotePort = ipPref!!.getString("remote_port", "")
+        if (ipPref!!.getStringSet("addresses", null) != null) {
+            udpViewModel.addresses = ipPref!!.getStringSet("addresses", null)!!.toMutableList()
+        }
+        addressAdapter = ArrayAdapter(
+            requireContext(),
+            android.R.layout.simple_dropdown_item_1line, udpViewModel.addresses.distinct()
+        )
+
+        remoteHost.setAdapter(addressAdapter)
+
         super.onResume()
     }
 
@@ -67,22 +83,30 @@ class UDPSendReceiveFragment(vm: UDPViewModel) : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-
-
-
         responseRecyclerView = view.findViewById(R.id.response_recycler_view)
+        remoteHost = view.findViewById(R.id.remote_address_and_port)
+
+
 
         viewManager = LinearLayoutManager(requireContext().applicationContext)
-        viewAdapter = ResponseAdapter(udpViewModel.responses)
-
-        if (savedInstanceState != null) {
-            udpViewModel.responses = savedInstanceState.getStringArrayList("responses")!!
-            Log.e(LOG_TAG, "Instance restored")
+        viewAdapter = ResponseAdapter(udpViewModel.responses) { itpm ->
+            val d = MessageDialog(itpm)
+            {
+                SendPacketAsyncTask()
+                    .execute(
+                        it.messageIp.removePrefix("/"),
+                        it.messagePort,
+                        it.messageText
+                    )
+            }
+                .showNow(requireActivity().supportFragmentManager, "Replay Message")
         }
-        udpViewModel.responsesLive.observe(viewLifecycleOwner, Observer<List<String>> { _ ->
-            viewAdapter.notifyDataSetChanged()
-        })
+
+        udpViewModel.responsesLive.observe(
+            viewLifecycleOwner,
+            Observer<List<ProtocolMessage>> { _ ->
+                viewAdapter.notifyDataSetChanged()
+            })
 
         Log.e(LOG_TAG, "View Created")
 
@@ -98,24 +122,24 @@ class UDPSendReceiveFragment(vm: UDPViewModel) : Fragment() {
             adapter = viewAdapter
         }
         send_button.setOnClickListener {
+            val remoteIp = remote_address_and_port.text
+                .toString()
+                .split(":", ignoreCase = true, limit = 0)
+                .first()
+            val remotePort = remote_address_and_port.text
+                .toString()
+                .split(":", ignoreCase = true, limit = 0)
+                .last()
             val message = message_to_send.text.toString()
-            SendPacketAsyncTask().execute(udpViewModel.remoteIp, udpViewModel.remotePort, message)
-            message_to_send.text = null
-        }
-    }
+            SendPacketAsyncTask().execute(remoteIp, remotePort, message)
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        outState.run {
-            putStringArrayList("responses", udpViewModel.responses)
-            Log.e(LOG_TAG, "instance saved")
         }
-
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
         super.onCreateOptionsMenu(menu, inflater)
         menu.findItem(R.id.action_connect).isVisible = true
+        menu.findItem(R.id.action_clear_responses).isVisible = true
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -127,16 +151,21 @@ class UDPSendReceiveFragment(vm: UDPViewModel) : Fragment() {
                     "Connection Dialog"
                 )
             }
+            R.id.action_clear_responses -> {
+                udpViewModel.responses.clear()
+                udpViewModel.loadResponses()
+            }
+
         }
         return super.onOptionsItemSelected(item)
     }
 
     override fun onPause() {
         super.onPause()
+
         with(ipPref!!.edit()) {
             putString("local_port", udpViewModel.localPort)
-            putString("remote_port", udpViewModel.remotePort)
-            putString("remote_ip", udpViewModel.remoteIp)
+            putStringSet("addresses", udpViewModel.addresses.distinct().toSet())
             apply()
         }
 
@@ -144,9 +173,9 @@ class UDPSendReceiveFragment(vm: UDPViewModel) : Fragment() {
     }
 
 
-    inner class SendPacketAsyncTask : AsyncTask<String, Void, String>() {
+    inner class SendPacketAsyncTask : AsyncTask<String, Void, Boolean>() {
 
-        override fun doInBackground(vararg params: String?): String? {
+        override fun doInBackground(vararg params: String?): Boolean? {
             try {
                 val msg = params[2]?.toByteArray()
                 val port = params[1]!!.toInt()
@@ -162,11 +191,12 @@ class UDPSendReceiveFragment(vm: UDPViewModel) : Fragment() {
                             Toast.LENGTH_LONG
                         ).show()
                     }
+                    return false
                 }
-                return ""
 
             } catch (e: SocketTimeoutException) {
                 e.printStackTrace()
+                return false
             } catch (e: Exception) {
                 activity!!.runOnUiThread {
                     Toast.makeText(
@@ -177,8 +207,20 @@ class UDPSendReceiveFragment(vm: UDPViewModel) : Fragment() {
                 }
 
                 e.printStackTrace()
+                return false
             }
-            return ""
+            return true
+        }
+
+        override fun onPostExecute(result: Boolean?) {
+            if (result!!) {
+                val address = remoteHost.text.toString()
+                if (addressAdapter.getPosition(address) == -1) {
+                    udpViewModel.addresses.add(address)
+                    addressAdapter.add(address)
+                }
+                message_to_send.text = null
+            }
         }
 
     }

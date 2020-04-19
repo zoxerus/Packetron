@@ -6,6 +6,7 @@ import android.view.View
 import android.widget.ToggleButton
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
+import com.tetron.packetron.ProtocolMessage
 import com.tetron.packetron.R
 import kotlinx.android.synthetic.main.dialog_udp_connection.view.*
 import java.net.DatagramPacket
@@ -28,12 +29,8 @@ class UDPConnectionDialog(vm: UDPViewModel) : DialogFragment() {
             builder.setTitle("UDP Connection")
             builder.setNegativeButton("Save") { _, _ ->
                 udpViewModel.localPort = dialogView!!.local_port.text.toString()
-                udpViewModel.remotePort = dialogView!!.remote_port.text.toString()
-                udpViewModel.remoteIp = dialogView!!.remote_ip.text.toString()
             }
             builder.setView(dialogView)
-            dialogView!!.remote_ip.setText(udpViewModel.remoteIp)
-            dialogView!!.remote_port.setText(udpViewModel.remotePort)
             dialogView!!.local_port.setText(udpViewModel.localPort)
 
             val connectToggle: ToggleButton = dialogView!!.findViewById(R.id.button_connect)
@@ -74,10 +71,13 @@ class UDPConnectionDialog(vm: UDPViewModel) : DialogFragment() {
 
                                 try {
                                     udpViewModel.udpSocket?.receive(packet)
-                                    val res: String =
-                                        packet.address.toString() + ":" + packet.port.toString() + " " + String(
-                                            msg
+                                    val res =
+                                        ProtocolMessage(
+                                            packet.address.toString(),
+                                            packet.port.toString(),
+                                            String(msg)
                                         )
+
                                     udpViewModel.responses.add(0, res)
                                     udpViewModel.loadResponses()
                                 } catch (e: SocketTimeoutException) {

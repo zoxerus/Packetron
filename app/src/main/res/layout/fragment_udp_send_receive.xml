@@ -7,29 +7,47 @@
     android:background="@android:color/background_light"
 
     android:orientation="horizontal"
-    android:padding="15dp"
+    android:padding="10dp"
     tools:context="ui.udp_send_receive.UDPSendReceiveFragment">
 
 
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/address_input_layout"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="5dp"
+        android:hint="@string/text_address_and_port"
+        app:layout_constraintBottom_toTopOf="@id/message_to_send"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/response_recycler_view">
+
+        <com.google.android.material.textfield.MaterialAutoCompleteTextView
+            android:id="@+id/remote_address_and_port"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:completionThreshold="0"
+            android:inputType="number" />
+
+    </com.google.android.material.textfield.TextInputLayout>
 
 
     <EditText
         android:id="@+id/message_to_send"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginVertical="15dp"
+        android:layout_marginVertical="5dp"
         android:layout_marginTop="15dp"
         android:autofillHints="@string/type_a_message"
         android:hint="@string/type_a_message"
         android:inputType="textCapSentences|textMultiLine|textAutoCorrect"
-        android:lines="2"
+        android:lines="1"
         android:maxLength="255"
         android:scrollbars="vertical"
         app:layout_constraintEnd_toStartOf="@id/send_button"
         app:layout_constraintHorizontal_weight=".8"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/response_recycler_view" />
+        app:layout_constraintBottom_toBottomOf="parent" />
 
 
     <Button
@@ -39,7 +57,7 @@
         android:layout_marginStart="15dp"
         android:layout_marginLeft="15dp"
         android:text="@string/send"
-        app:layout_constraintBottom_toBottomOf="@id/message_to_send"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_weight=".2"
         app:layout_constraintStart_toEndOf="@id/message_to_send" />
@@ -48,9 +66,9 @@
         android:id="@+id/response_recycler_view"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginVertical="15dp"
+        android:layout_marginVertical="5dp"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        app:layout_constraintBottom_toTopOf="@id/message_to_send"
+        app:layout_constraintBottom_toTopOf="@id/address_input_layout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />

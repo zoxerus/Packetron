@@ -8,6 +8,12 @@
         android:orderInCategory="100"
         android:title="@string/text_connect"
         app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_clear_responses"
+        android:orderInCategory="100"
+        android:title="@string/text_clear_responses"
+        android:visible="false"
+        app:showAsAction="never" />
 
     <item
         android:id="@+id/action_view_local_ip"

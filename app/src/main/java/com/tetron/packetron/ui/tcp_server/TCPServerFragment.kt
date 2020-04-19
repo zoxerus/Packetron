@@ -16,7 +16,6 @@ class TCPServerFragment : Fragment() {
     private var tcpServer: ServerSocket? = null
 
     companion object {
-        private var tcpClients: ArrayList<TCPClientHandler> = ArrayList()
         fun newInstance(): TCPServerFragment {
             return TCPServerFragment()
         }
@@ -54,7 +53,7 @@ class TCPServerFragment : Fragment() {
                     } catch (e: Exception) {
                         tcpServer = null
                         e.printStackTrace()
-                        activity!!.runOnUiThread {
+                        requireActivity().runOnUiThread {
                             connectToggle.isChecked = false
                             tcp_local_port.error = " Cannot bind to port "
                             Toast.makeText(context, "Cannot bind to port", Toast.LENGTH_LONG)
