@@ -23,12 +23,15 @@ class MessageDialog(pm: ProtocolMessage, lsnr: (ProtocolMessage) -> Unit) : Dial
             builder.setView(dialogView)
             builder.setNegativeButton("Cancel", null)
             builder.setPositiveButton("Send") { _, _ ->
-                listener(
+                val newPm: ProtocolMessage =
                     ProtocolMessage(
-                        protocolMessage.messageIp,
-                        protocolMessage.messagePort,
-                        dialogView!!.replay_message.text.toString()
+                        dialogView!!.replay_message.text.toString(),
+                        protocolMessage.socket
                     )
+                newPm.messageIp = protocolMessage.messageIp
+                newPm.messagePort = protocolMessage.messagePort
+                listener(
+                    newPm
                 )
             }
             builder.create()

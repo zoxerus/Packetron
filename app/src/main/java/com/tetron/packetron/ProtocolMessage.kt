@@ -1,10 +1,12 @@
 package com.tetron.packetron
 
-class ProtocolMessage(ip: String, prt: String, msg: String) {
-    var messageText: String = msg
-    var messagePort: String = prt
-    var messageIp: String = ip
+import java.net.Socket
 
+class ProtocolMessage(msg: String, s: Socket? = null) {
+    val socket: Socket? = s
+    var messageText: String = msg
+    var messagePort: String = s?.port.toString()
+    var messageIp: String = s?.inetAddress.toString()
 
     override fun toString(): String {
         return "$messageIp:$messagePort\t$messageText"

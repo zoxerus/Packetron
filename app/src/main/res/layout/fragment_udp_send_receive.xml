@@ -27,7 +27,10 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:completionThreshold="0"
-            android:inputType="number" />
+            android:digits="0123456789.:"
+            android:inputType="text"
+
+            />
 
     </com.google.android.material.textfield.TextInputLayout>
 

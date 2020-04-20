@@ -1,18 +1,27 @@
 package com.tetron.packetron.ui.tcp_server
 
+import com.tetron.packetron.ProtocolMessage
 import java.io.InputStream
-import java.io.OutputStream
 import java.net.Socket
-import java.nio.charset.Charset
 
-class TCPClientHandler(client: Socket) : Thread() {
+class TCPClientHandler(client: Socket, act: (ProtocolMessage) -> Unit) : Thread() {
     private val clientSocket: Socket = client
-    private val writer: OutputStream = clientSocket.getOutputStream()
     private val reader: InputStream = clientSocket.getInputStream()
+    private val action = act
 
     override fun run() {
         super.run()
-        writer.write("hello bitches\n".toByteArray(Charset.defaultCharset()))
-        writer.flush()
+        val message = ByteArray(255)
+        var length: Int
+        do {
+            length = reader.read(message)
+            action(
+                ProtocolMessage(
+                    String(message, 0, length),
+                    clientSocket
+                )
+            )
+        } while (length != -1)
+        interrupt()
     }
 }

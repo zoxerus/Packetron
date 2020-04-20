@@ -29,5 +29,6 @@
     <string name="tcp_server">TCP Server</string>
     <string name="text_clear_responses">Clear Responses</string>
     <string name="text_address_and_port">address and port</string>
+    <string name="packetron">Packetron</string>
 
 </resources>

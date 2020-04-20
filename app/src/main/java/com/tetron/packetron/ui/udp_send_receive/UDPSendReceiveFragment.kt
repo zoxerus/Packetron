@@ -15,20 +15,22 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.tetron.packetron.ProtocolMessage
 import com.tetron.packetron.R
+import com.tetron.packetron.ui.ConnectionDialog
+import com.tetron.packetron.ui.ConnectionViewModel
 import com.tetron.packetron.ui.MessageDialog
 import com.tetron.packetron.ui.ResponseAdapter
 import kotlinx.android.synthetic.main.fragment_udp_send_receive.*
 import java.net.DatagramPacket
+import java.net.DatagramSocket
 import java.net.InetAddress
 import java.net.SocketTimeoutException
 
 const val LOG_TAG: String = "UDP_SEND_RECEIVE"
 
-class UDPSendReceiveFragment(vm: UDPViewModel) : Fragment() {
+class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment() {
 
     private val udpViewModel = vm
 
-    private var responseRecyclerView: RecyclerView? = null
     private var ipPref: SharedPreferences? = null
 
     private lateinit var recyclerView: RecyclerView
@@ -39,22 +41,22 @@ class UDPSendReceiveFragment(vm: UDPViewModel) : Fragment() {
     private lateinit var addressAdapter: ArrayAdapter<String>
     private lateinit var remoteHost: AutoCompleteTextView
 
-    constructor() : this(UDPViewModel())
+    constructor() : this(ConnectionViewModel())
 
     companion object {
-        fun newInstance(vm: UDPViewModel): UDPSendReceiveFragment {
+        fun newInstance(vm: ConnectionViewModel): UDPSendReceiveFragment {
             return UDPSendReceiveFragment(vm)
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-
-        retainInstance = true
+        //retainInstance = true
         setHasOptionsMenu(true)
         super.onCreate(savedInstanceState)
     }
 
     override fun onResume() {
+        requireActivity().title = "UDP Sender Receiver"
         udpViewModel.localPort = ipPref!!.getString("local_port", "33333")
         if (ipPref!!.getStringSet("addresses", null) != null) {
             udpViewModel.addresses = ipPref!!.getStringSet("addresses", null)!!.toMutableList()
@@ -83,13 +85,11 @@ class UDPSendReceiveFragment(vm: UDPViewModel) : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        responseRecyclerView = view.findViewById(R.id.response_recycler_view)
+
         remoteHost = view.findViewById(R.id.remote_address_and_port)
 
-
-
         viewManager = LinearLayoutManager(requireContext().applicationContext)
-        viewAdapter = ResponseAdapter(udpViewModel.responses) { itpm ->
+        viewAdapter = ResponseAdapter(udpViewModel.udpResponses) { itpm ->
             val d = MessageDialog(itpm)
             {
                 SendPacketAsyncTask()
@@ -102,7 +102,7 @@ class UDPSendReceiveFragment(vm: UDPViewModel) : Fragment() {
                 .showNow(requireActivity().supportFragmentManager, "Replay Message")
         }
 
-        udpViewModel.responsesLive.observe(
+        udpViewModel.udpResponsesLive.observe(
             viewLifecycleOwner,
             Observer<List<ProtocolMessage>> { _ ->
                 viewAdapter.notifyDataSetChanged()
@@ -111,27 +111,25 @@ class UDPSendReceiveFragment(vm: UDPViewModel) : Fragment() {
         Log.e(LOG_TAG, "View Created")
 
         recyclerView = view.findViewById<RecyclerView>(R.id.response_recycler_view).apply {
-            // use this setting to improve performance if you know that changes
-            // in content do not change the layout size of the RecyclerView
             setHasFixedSize(true)
-
-            // use a linear layout manager
             layoutManager = viewManager
-
-            // specify an viewAdapter (see also next example)
             adapter = viewAdapter
         }
+
         send_button.setOnClickListener {
-            val remoteIp = remote_address_and_port.text
-                .toString()
-                .split(":", ignoreCase = true, limit = 0)
-                .first()
-            val remotePort = remote_address_and_port.text
-                .toString()
-                .split(":", ignoreCase = true, limit = 0)
-                .last()
             val message = message_to_send.text.toString()
-            SendPacketAsyncTask().execute(remoteIp, remotePort, message)
+            if (message.isNotEmpty()) {
+                val remoteIp = remote_address_and_port.text
+                    .toString()
+                    .split(":", ignoreCase = true, limit = 0)
+                    .first()
+                val remotePort = remote_address_and_port.text
+                    .toString()
+                    .split(":", ignoreCase = true, limit = 0)
+                    .last()
+
+                SendPacketAsyncTask().execute(remoteIp, remotePort, message)
+            }
 
         }
     }
@@ -145,15 +143,68 @@ class UDPSendReceiveFragment(vm: UDPViewModel) : Fragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.action_connect -> {
-                val udpConnectionDialog = UDPConnectionDialog(udpViewModel)
+                val udpConnectionDialog =
+                    ConnectionDialog(udpViewModel, { vm, button ->
+                        if (vm.udpSocket != null && vm.udpSocket!!.isBound) {
+                            button.isChecked = true
+                        }
+                    }, { vm, port, toggle, editText ->
+                        if (vm.udpSocket != null && vm.udpSocket!!.isBound) {
+                            vm.udpSocket?.close()
+                            vm.udpSocket = null
+                        } else {
+                            Thread {
+                                do {
+                                    val msg = ByteArray(2048)
+                                    val packet = DatagramPacket(msg, msg.size)
+                                    if (vm.udpSocket == null || !vm.udpSocket!!.isBound) {
+                                        try {
+                                            vm.udpSocket = DatagramSocket(port.toInt())
+                                            vm.udpSocket?.soTimeout = 0
+                                        } catch (e: Exception) {
+                                            requireActivity().runOnUiThread {
+                                                toggle.isChecked = false
+                                                editText.error = "Port Unavailable"
+                                            }
+                                            e.printStackTrace()
+                                            break
+                                        }
+                                    } else {
+
+                                        try {
+                                            vm.udpSocket?.receive(packet)
+                                            val res =
+                                                ProtocolMessage(
+                                                    String(msg)
+                                                )
+                                            res.messageIp = packet.address.toString()
+                                            res.messagePort = packet.port.toString()
+
+                                            vm.udpResponses.add(0, res)
+                                            vm.loadUdpResponses()
+                                        } catch (e: SocketTimeoutException) {
+                                            e.printStackTrace()
+                                        } catch (e: Exception) {
+                                            e.printStackTrace()
+                                        }
+                                    }
+                                } while (vm.udpSocket != null && vm.udpSocket!!.isBound)
+                                vm.udpSocket?.close()
+                            }.start()
+
+                        }
+                    })
+
+
+
                 udpConnectionDialog.showNow(
                     requireActivity().supportFragmentManager,
                     "Connection Dialog"
                 )
             }
             R.id.action_clear_responses -> {
-                udpViewModel.responses.clear()
-                udpViewModel.loadResponses()
+                udpViewModel.udpResponses.clear()
+                udpViewModel.loadUdpResponses()
             }
 
         }

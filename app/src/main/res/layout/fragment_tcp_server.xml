@@ -1,67 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/background_light"
-    android:padding="5dp">
+
+    android:orientation="horizontal"
+    android:padding="10dp"
+    tools:context="ui.udp_send_receive.UDPSendReceiveFragment">
 
 
-    <com.google.android.material.textfield.TextInputLayout
-        android:id="@+id/tcp_local_port_input_layout"
+    <Spinner
+        android:id="@+id/tcp_address_spinner"
+        android:layout_height="wrap_content"
+        android:layout_width="match_parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/message_to_send"
+        app:layout_constraintTop_toBottomOf="@id/response_recycler_view" />
+
+
+    <EditText
+        android:id="@+id/message_to_send"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:hint="@string/local_port"
-        app:layout_constraintEnd_toStartOf="@id/tcp_button_connect"
-        app:layout_constraintHorizontal_weight=".5"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        android:layout_marginVertical="5dp"
+        android:layout_marginTop="15dp"
+        android:autofillHints="@string/type_a_message"
+        android:hint="@string/type_a_message"
+        android:inputType="textCapSentences|textMultiLine|textAutoCorrect"
+        android:lines="1"
+        android:maxLength="255"
+        android:scrollbars="vertical"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@id/send_button"
+        app:layout_constraintHorizontal_weight=".8"
+        app:layout_constraintStart_toStartOf="parent" />
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/tcp_local_port"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:digits="0123456789"
-            android:inputType="number|numberDecimal" />
 
-
-    </com.google.android.material.textfield.TextInputLayout>
-
-    <ToggleButton
-        android:id="@+id/tcp_button_connect"
+    <Button
+        android:id="@+id/send_button"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="15dp"
         android:layout_marginLeft="15dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_weight=".5"
-        app:layout_constraintStart_toEndOf="@id/tcp_local_port_input_layout"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <TextView
-        android:id="@+id/tcp_client_count"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tcp_local_port_input_layout" />
-
-    <EditText
-        android:id="@+id/tcp_message"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@id/tcp_send_button"
-        app:layout_constraintHorizontal_weight=".8"
-        app:layout_constraintStart_toStartOf="parent" />
-
-    <Button
-        android:id="@+id/tcp_send_button"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginHorizontal="5dp"
+        android:text="@string/send"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_weight=".2"
-        app:layout_constraintStart_toEndOf="@id/tcp_message" />
+        app:layout_constraintStart_toEndOf="@id/message_to_send" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/response_recycler_view"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginVertical="5dp"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layout_constraintBottom_toTopOf="@id/tcp_address_spinner"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
