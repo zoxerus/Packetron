@@ -3,6 +3,7 @@ package com.tetron.packetron
 import android.app.AlertDialog
 import android.app.Dialog
 import android.content.Context
+import android.content.Intent
 import android.net.wifi.WifiManager
 import android.os.Bundle
 import android.os.Handler
@@ -19,6 +20,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
 import com.google.android.material.navigation.NavigationView
 import com.tetron.packetron.ui.ConnectionViewModel
+import com.tetron.packetron.ui.tcp_client.TCPClientFragment
 import com.tetron.packetron.ui.tcp_server.TCPServerFragment
 import com.tetron.packetron.ui.udp_send_receive.UDPSendReceiveFragment
 import java.net.InetAddress
@@ -28,14 +30,15 @@ import java.net.UnknownHostException
 const val LOG_TAG = "Main Activity"
 const val UDP_FRAGMENT_TAG = "UDP Sender Receiver"
 const val TCP_SERVER_FRAGMENT_TAG = "TCP Server"
+const val TCP_CLIENT_FRAGMENT_TAG = "TCP Client"
 
 class MainActivity : AppCompatActivity() {
 
     private var udpSendReceiveFragment: UDPSendReceiveFragment? = null
     private var tcpServerFragment: TCPServerFragment? = null
+    private var tcpClientFragment: TCPClientFragment? = null
 
-    private val udpViewModel: ConnectionViewModel by viewModels()
-    private val tcpViewModel: ConnectionViewModel by viewModels()
+    private val connectionViewModel: ConnectionViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,7 +61,7 @@ class MainActivity : AppCompatActivity() {
 
 
         udpSendReceiveFragment =
-            UDPSendReceiveFragment.newInstance(udpViewModel)
+            UDPSendReceiveFragment.newInstance(connectionViewModel)
 
         supportFragmentManager.beginTransaction()
             .replace(R.id.nav_host_fragment, udpSendReceiveFragment!!, UDP_FRAGMENT_TAG)
@@ -74,19 +77,25 @@ class MainActivity : AppCompatActivity() {
                 R.id.nav_tcp_server -> {
                     fragmentTag = TCP_SERVER_FRAGMENT_TAG
                     if (tcpServerFragment == null) tcpServerFragment =
-                        TCPServerFragment.newInstance(tcpViewModel)
+                        TCPServerFragment.newInstance(connectionViewModel)
                     fragment = tcpServerFragment
+                }
+                R.id.nav_tcp_client -> {
+                    fragmentTag = TCP_CLIENT_FRAGMENT_TAG
+                    if (tcpClientFragment == null) tcpClientFragment =
+                        TCPClientFragment.newInstance(connectionViewModel)
+                    fragment = tcpClientFragment
                 }
                 R.id.nav_udp -> {
                     fragmentTag = UDP_FRAGMENT_TAG
                     if (udpSendReceiveFragment == null) udpSendReceiveFragment =
-                        UDPSendReceiveFragment.newInstance(udpViewModel)
+                        UDPSendReceiveFragment.newInstance(connectionViewModel)
                     fragment = udpSendReceiveFragment
                 }
                 else -> {
                     fragmentTag = UDP_FRAGMENT_TAG
                     if (udpSendReceiveFragment == null) udpSendReceiveFragment =
-                        UDPSendReceiveFragment.newInstance(udpViewModel)
+                        UDPSendReceiveFragment.newInstance(connectionViewModel)
                     fragment = udpSendReceiveFragment
                 }
             }
@@ -128,6 +137,10 @@ class MainActivity : AppCompatActivity() {
                 val fmd = ShowIpDialog()
                 fmd.setIpAddress(getIpAddress(this)!!)
                 fmd.showNow(supportFragmentManager, "IP Dialog")
+            }
+            R.id.action_settings -> {
+                val settingsIntent: Intent = Intent(this, SettingsActivity::class.java)
+                startActivity(settingsIntent)
             }
         }
 

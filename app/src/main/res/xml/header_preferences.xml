@@ -1,0 +1,15 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <Preference
+        app:fragment="com.tetron.packetron.ui.SettingsActivity$UDPSendReceiveFragment"
+        app:icon="@drawable/messages"
+        app:key="messages_header"
+        app:title="UDP Settings" />
+
+    <Preference
+        app:fragment="com.tetron.packetron.ui.SettingsActivity$TCPServerFragment"
+        app:icon="@drawable/sync"
+        app:key="sync_header"
+        app:title="TCP Server" />
+
+</PreferenceScreen>

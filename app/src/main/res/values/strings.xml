@@ -30,5 +30,29 @@
     <string name="text_clear_responses">Clear Responses</string>
     <string name="text_address_and_port">address and port</string>
     <string name="packetron">Packetron</string>
+    <string name="tcp_client">TCP Client</string>
+    <string name="connection">Connection</string>
+    <string name="title_activity_settings">Settings</string>
+
+    <!-- Preference Titles -->
+    <string name="messages_header">Messages</string>
+    <string name="sync_header">Sync</string>
+
+    <!-- Messages Preferences -->
+    <string name="signature_title">Your signature</string>
+    <string name="reply_title">Default reply action</string>
+
+    <!-- Sync Preferences -->
+    <string name="sync_title">Sync email periodically</string>
+    <string name="attachment_title">Download incoming attachments</string>
+    <string name="attachment_summary_on">Automatically download attachments for incoming emails
+    </string>
+    <string name="attachment_summary_off">Only download attachments when manually requested</string>
+    <string name="tcp_server_remember_hosts">tcp_server_remember_hosts</string>
+    <string name="tcp_server_show_sent">tcp_server_show_sent</string>
+    <string name="tcp_server_in_buffer">tcp_server_in_buffer</string>
+    <string name="tcp_client_show_sent">tcp_client_show_sent</string>
+    <string name="tcp_client_in_buffer">tcp_client_in_buffer</string>
+
 
 </resources>

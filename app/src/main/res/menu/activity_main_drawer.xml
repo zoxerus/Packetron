@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:showIn="navigation_view">
 
-    <item android:title="@string/nav_title_udp">
+    <item android:title="@string/connection">
         <menu>
             <item
                 android:id="@+id/nav_udp"
@@ -13,6 +13,10 @@
                 android:id="@+id/nav_tcp_server"
                 android:icon="@drawable/ic_send"
                 android:title="@string/tcp_server" />
+            <item
+                android:id="@+id/nav_tcp_client"
+                android:icon="@drawable/ic_send"
+                android:title="@string/tcp_client" />
         </menu>
 
     </item>

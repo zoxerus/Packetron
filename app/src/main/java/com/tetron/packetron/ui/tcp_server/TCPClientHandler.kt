@@ -1,27 +1,38 @@
 package com.tetron.packetron.ui.tcp_server
 
 import com.tetron.packetron.ProtocolMessage
+import com.tetron.packetron.ui.ConnectionViewModel
 import java.io.InputStream
 import java.net.Socket
 
-class TCPClientHandler(client: Socket, act: (ProtocolMessage) -> Unit) : Thread() {
+class TCPClientHandler(
+    private val vm: ConnectionViewModel,
+    private val inBuffer: Int,
+    client: Socket,
+    act: (ProtocolMessage) -> Unit
+) : Thread() {
     private val clientSocket: Socket = client
     private val reader: InputStream = clientSocket.getInputStream()
     private val action = act
 
+
     override fun run() {
         super.run()
-        val message = ByteArray(255)
-        var length: Int
+        val message = ByteArray(inBuffer)
+        var length = 0
         do {
-            length = reader.read(message)
-            action(
-                ProtocolMessage(
-                    String(message, 0, length),
-                    clientSocket
+            if (length != 0) {
+                action(
+                    ProtocolMessage(
+                        String(message, 0, length),
+                        clientSocket
+                    )
                 )
-            )
-        } while (length != -1)
+            }
+            length = reader.read(message)
+        } while (length != -1 && vm.tcpServerSocket != null)
+        vm.tcpClients.remove(clientSocket)
+        vm.loadTcpClients()
         interrupt()
     }
 }

@@ -9,7 +9,6 @@
         android:id="@+id/local_port_input_layout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:hint="@string/local_port"
         app:layout_constraintEnd_toStartOf="@id/button_connect"
         app:layout_constraintHorizontal_weight=".5"
         app:layout_constraintStart_toStartOf="parent"
@@ -19,8 +18,8 @@
             android:id="@+id/local_port"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:digits="0123456789"
-            android:inputType="number|numberDecimal" />
+            android:digits="0123456789.:"
+            android:inputType="text" />
 
     </com.google.android.material.textfield.TextInputLayout>
 

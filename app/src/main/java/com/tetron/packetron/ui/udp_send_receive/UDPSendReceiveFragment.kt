@@ -11,6 +11,7 @@ import android.widget.AutoCompleteTextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
+import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.tetron.packetron.ProtocolMessage
@@ -27,11 +28,14 @@ import java.net.SocketTimeoutException
 
 const val LOG_TAG: String = "UDP_SEND_RECEIVE"
 
-class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment() {
+class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
+    SharedPreferences.OnSharedPreferenceChangeListener {
 
     private val udpViewModel = vm
 
     private var ipPref: SharedPreferences? = null
+
+    private var preferences: SharedPreferences? = null
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var viewAdapter: RecyclerView.Adapter<*>
@@ -50,8 +54,9 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        //retainInstance = true
         setHasOptionsMenu(true)
+        preferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
+        preferences!!.registerOnSharedPreferenceChangeListener(this)
         super.onCreate(savedInstanceState)
     }
 
@@ -90,7 +95,7 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment() {
 
         viewManager = LinearLayoutManager(requireContext().applicationContext)
         viewAdapter = ResponseAdapter(udpViewModel.udpResponses) { itpm ->
-            val d = MessageDialog(itpm)
+            MessageDialog(itpm)
             {
                 SendPacketAsyncTask()
                     .execute(
@@ -127,10 +132,24 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment() {
                     .toString()
                     .split(":", ignoreCase = true, limit = 0)
                     .last()
-
                 SendPacketAsyncTask().execute(remoteIp, remotePort, message)
             }
 
+        }
+    }
+
+    override fun onSharedPreferenceChanged(sharedPreferences: SharedPreferences?, key: String?) {
+        when {
+            key.equals("udp_show_sent") -> {
+
+            }
+            key.equals("udp_remember_hosts") -> {
+                if (!sharedPreferences!!.getBoolean(key, true)) {
+                    ipPref!!.edit().remove("addresses").apply()
+                    udpViewModel.addresses.clear()
+                    addressAdapter.notifyDataSetChanged()
+                }
+            }
         }
     }
 
@@ -143,57 +162,69 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.action_connect -> {
+                if (
+                    ipPref!!.getBoolean("udp_remember_port", true)) {
+
+                }
                 val udpConnectionDialog =
-                    ConnectionDialog(udpViewModel, { vm, button ->
-                        if (vm.udpSocket != null && vm.udpSocket!!.isBound) {
-                            button.isChecked = true
-                        }
-                    }, { vm, port, toggle, editText ->
-                        if (vm.udpSocket != null && vm.udpSocket!!.isBound) {
-                            vm.udpSocket?.close()
-                            vm.udpSocket = null
-                        } else {
-                            Thread {
-                                do {
-                                    val msg = ByteArray(2048)
-                                    val packet = DatagramPacket(msg, msg.size)
-                                    if (vm.udpSocket == null || !vm.udpSocket!!.isBound) {
-                                        try {
-                                            vm.udpSocket = DatagramSocket(port.toInt())
-                                            vm.udpSocket?.soTimeout = 0
-                                        } catch (e: Exception) {
-                                            requireActivity().runOnUiThread {
-                                                toggle.isChecked = false
-                                                editText.error = "Port Unavailable"
-                                            }
-                                            e.printStackTrace()
-                                            break
-                                        }
-                                    } else {
-
-                                        try {
-                                            vm.udpSocket?.receive(packet)
-                                            val res =
-                                                ProtocolMessage(
-                                                    String(msg)
-                                                )
-                                            res.messageIp = packet.address.toString()
-                                            res.messagePort = packet.port.toString()
-
-                                            vm.udpResponses.add(0, res)
-                                            vm.loadUdpResponses()
-                                        } catch (e: SocketTimeoutException) {
-                                            e.printStackTrace()
-                                        } catch (e: Exception) {
-                                            e.printStackTrace()
-                                        }
-                                    }
-                                } while (vm.udpSocket != null && vm.udpSocket!!.isBound)
+                    ConnectionDialog(
+                        "Enter Local Port Number",
+                        udpViewModel.localPort,
+                        udpViewModel,
+                        { vm, button ->
+                            if (vm.udpSocket != null && vm.udpSocket!!.isBound) {
+                                button.isChecked = true
+                            }
+                        },
+                        { vm, port, toggle, editText ->
+                            if (vm.udpSocket != null && vm.udpSocket!!.isBound) {
                                 vm.udpSocket?.close()
-                            }.start()
+                                vm.udpSocket = null
+                            } else {
+                                Thread {
+                                    do {
+                                        val msg = ByteArray(
+                                            preferences!!
+                                                .getString("udp_in_buffer", "255")!!.toInt()
+                                        )
+                                        val packet = DatagramPacket(msg, msg.size)
+                                        if (vm.udpSocket == null || !vm.udpSocket!!.isBound) {
+                                            try {
+                                                vm.udpSocket = DatagramSocket(port.toInt())
+                                                vm.udpSocket?.soTimeout = 0
+                                            } catch (e: Exception) {
+                                                requireActivity().runOnUiThread {
+                                                    toggle.isChecked = false
+                                                    editText.error = "Port Unavailable"
+                                                }
+                                                e.printStackTrace()
+                                                break
+                                            }
+                                        } else {
 
-                        }
-                    })
+                                            try {
+                                                vm.udpSocket?.receive(packet)
+                                                val res =
+                                                    ProtocolMessage(
+                                                        String(msg)
+                                                    )
+                                                res.messageIp = packet.address.toString()
+                                                res.messagePort = packet.port.toString()
+
+                                                vm.udpResponses.add(0, res)
+                                                vm.loadUdpResponses()
+                                            } catch (e: SocketTimeoutException) {
+                                                e.printStackTrace()
+                                            } catch (e: Exception) {
+                                                e.printStackTrace()
+                                            }
+                                        }
+                                    } while (vm.udpSocket != null && vm.udpSocket!!.isBound)
+                                    vm.udpSocket?.close()
+                                }.start()
+
+                            }
+                        })
 
 
 
@@ -225,13 +256,15 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment() {
 
 
     inner class SendPacketAsyncTask : AsyncTask<String, Void, Boolean>() {
-
+        private lateinit var msg: ByteArray
+        private var port: Int = 0
+        private lateinit var receiverAddress: InetAddress
         override fun doInBackground(vararg params: String?): Boolean? {
             try {
-                val msg = params[2]?.toByteArray()
-                val port = params[1]!!.toInt()
-                val receiverAddress = InetAddress.getByName(params[0])
-                val packet = DatagramPacket(msg, msg!!.size, receiverAddress, port)
+                msg = params[2]?.toByteArray()!!
+                port = params[1]!!.toInt()
+                receiverAddress = InetAddress.getByName(params[0])
+                val packet = DatagramPacket(msg, msg.size, receiverAddress, port)
                 if (udpViewModel.udpSocket != null && udpViewModel.udpSocket!!.isBound) {
                     udpViewModel.udpSocket?.send(packet)
                 } else {
@@ -266,50 +299,26 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment() {
         override fun onPostExecute(result: Boolean?) {
             if (result!!) {
                 val address = remoteHost.text.toString()
-                if (addressAdapter.getPosition(address) == -1) {
+                if (
+                    preferences!!.getBoolean("udp_show_sent", false)
+                ) {
+                    val pm = ProtocolMessage(String(msg))
+                    pm.messageIp = "localhost"
+                    pm.messagePort = port.toString()
+                    udpViewModel.udpResponses.add(0, pm)
+                    udpViewModel.loadUdpResponses()
+                }
+                if (preferences!!.getBoolean("udp_remember_hosts", true)
+                    && addressAdapter.getPosition(address) == -1
+                ) {
                     udpViewModel.addresses.add(address)
-                    addressAdapter.add(address)
+                    addressAdapter.notifyDataSetChanged()
                 }
                 message_to_send.text = null
             }
         }
 
     }
-
-/*    inner class UDPSocketAsyncTask : AsyncTask<String, Void, Void>() {
-
-
-        override fun doInBackground(vararg params: String?): Void? {
-            setThreadPriority(THREAD_PRIORITY_BACKGROUND + THREAD_PRIORITY_MORE_FAVORABLE)
-            val msg = ByteArray(255)
-            val packet = DatagramPacket(msg, msg.size)
-            val port = params[0]!!.toInt()
-
-            while (true) {
-                try {
-                    if (udpSocket == null || !udpSocket!!.isBound) {
-                        udpSocket = DatagramSocket(port)
-                        udpSocket?.soTimeout = 0
-                        activity!!.runOnUiThread {
-                            button_connect.text = "Disconnect"
-                        }
-
-                    } else {
-                        udpSocket?.receive(packet)
-                        activity!!.runOnUiThread {
-
-                        }
-                    }
-
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                    udpSocket?.close()
-                    udpSocket = null
-                    return null
-                }
-            }
-        }
-    }*/
 
 
 }

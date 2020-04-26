@@ -1,5 +1,7 @@
 package com.tetron.packetron.ui.tcp_server
 
+import android.content.Context
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.view.*
@@ -7,6 +9,7 @@ import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
+import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.tetron.packetron.ProtocolMessage
@@ -17,6 +20,7 @@ import com.tetron.packetron.ui.MessageDialog
 import com.tetron.packetron.ui.ResponseAdapter
 import com.tetron.packetron.ui.udp_send_receive.LOG_TAG
 import kotlinx.android.synthetic.main.fragment_tcp_server.*
+import kotlinx.android.synthetic.main.fragment_tcp_server.view.*
 import java.net.ServerSocket
 import java.net.Socket
 
@@ -26,6 +30,10 @@ class TCPServerFragment(vm: ConnectionViewModel) : Fragment() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var responseAdapter: RecyclerView.Adapter<*>
     private lateinit var viewManager: RecyclerView.LayoutManager
+
+    private var ipPref: SharedPreferences? = null
+    private var sharedPreferences: SharedPreferences? = null
+
 
     private lateinit var clientAdapter: ArrayAdapter<Socket>
 
@@ -43,6 +51,7 @@ class TCPServerFragment(vm: ConnectionViewModel) : Fragment() {
     override fun onResume() {
         super.onResume()
         requireActivity().title = "TCP Server"
+        tcpViewModel.localTcpPort = ipPref!!.getString("local_port", "33333")
     }
 
     override fun onCreateView(
@@ -50,38 +59,63 @@ class TCPServerFragment(vm: ConnectionViewModel) : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        ipPref = activity?.getSharedPreferences("ip_preferences", Context.MODE_PRIVATE)
         return inflater.inflate(R.layout.fragment_tcp_server, container, false)
     }
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        clientAdapter = ArrayAdapter(requireActivity(), android.R.layout.simple_dropdown_item_1line)
+
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(requireContext())
+
+        clientAdapter = ArrayAdapter(
+            requireActivity(),
+            android.R.layout.simple_dropdown_item_1line,
+            tcpViewModel.tcpClients
+        )
         tcp_address_spinner.adapter = clientAdapter
-        send_button.setOnClickListener {
+        view.send_button.setOnClickListener {
             val pos = tcp_address_spinner.selectedItemPosition
-            val soc = clientAdapter.getItem(pos)
-            val msg = message_to_send.text.toString().toByteArray()
-            if (msg.isNotEmpty() && soc != null && soc.isConnected) {
-                Thread {
-                    try {
-                        soc.getOutputStream().write(msg)
-                    } catch (e: java.lang.Exception) {
-                        e.printStackTrace()
-                    }
-                }.start()
-                message_to_send.text = null
+            Log.e("pos ", pos.toString())
+            if (pos == -1) {
+                Toast.makeText(requireContext(), "Select Client First", Toast.LENGTH_LONG).show()
+            } else {
+                val soc = clientAdapter.getItem(pos)
+                val msg = message_to_send.text.toString()
+                if (msg.isNotEmpty() && soc != null && soc.isConnected) {
+                    Thread {
+
+                        try {
+                            soc.getOutputStream().write(msg.toByteArray())
+                            if (sharedPreferences!!.getBoolean(
+                                    "@string/tcp_server_show_sent",
+                                    true
+                                )
+                            ) {
+                                val pm = ProtocolMessage(msg)
+                                pm.messageIp = "localhost"
+                                pm.messagePort = tcpViewModel.localTcpPort.toString()
+                                tcpViewModel.tcpServerResponses.add(0, pm)
+                                tcpViewModel.loadTcpServerResponses()
+                            }
+
+                        } catch (e: java.lang.Exception) {
+                            e.printStackTrace()
+                        }
+                    }.start()
+                    message_to_send.text = null
+                }
             }
         }
 
         viewManager = LinearLayoutManager(requireContext().applicationContext)
-        responseAdapter = ResponseAdapter(tcpViewModel.tcpResponses) { pm ->
+        responseAdapter = ResponseAdapter(tcpViewModel.tcpServerResponses) { pm ->
             MessageDialog(pm)
             {
                 if (pm.socket != null && pm.socket.isBound) {
                     Thread {
                         try {
                             pm.socket.getOutputStream()
-                                .write(it.toString().toByteArray())
+                                .write(it.messageText.toByteArray())
                             pm.socket.getOutputStream().flush()
                         } catch (e: Exception) {
                             requireActivity().runOnUiThread {
@@ -93,7 +127,6 @@ class TCPServerFragment(vm: ConnectionViewModel) : Fragment() {
                                     .show()
                             }
                         }
-
                     }.start()
 
                 }
@@ -101,10 +134,15 @@ class TCPServerFragment(vm: ConnectionViewModel) : Fragment() {
                 .showNow(requireActivity().supportFragmentManager, "Replay Message")
         }
 
-        tcpViewModel.tcpResponsesLive.observe(
+        tcpViewModel.tcpServerResponsesLive.observe(
             viewLifecycleOwner,
             Observer<List<ProtocolMessage>> { _ ->
                 responseAdapter.notifyDataSetChanged()
+            })
+        tcpViewModel.tcpClientsLive.observe(
+            viewLifecycleOwner,
+            Observer<List<Socket>> { _ ->
+                clientAdapter.notifyDataSetChanged()
             })
 
         Log.e(LOG_TAG, "View Created")
@@ -127,35 +165,40 @@ class TCPServerFragment(vm: ConnectionViewModel) : Fragment() {
         when (item.itemId) {
             R.id.action_connect -> {
                 val udpConnectionDialog =
-                    ConnectionDialog(tcpViewModel, { vm, button ->
-                        if (vm.tcpSocket != null && vm.tcpSocket!!.isBound) {
-                            button.isChecked = true
-                        }
-                    },
+                    ConnectionDialog(
+                        "Enter Local Port Number",
+                        tcpViewModel.localTcpPort,
+                        tcpViewModel,
+                        { vm, button ->
+                            if (vm.tcpServerSocket != null && vm.tcpServerSocket!!.isBound) {
+                                button.isChecked = true
+                            }
+                        },
                         { vm, port, toggle, editText ->
 
                             Log.e("TCP SERVER", " button changed status ")
                             toggle.isEnabled = false
-                            if (vm.tcpSocket != null && vm.tcpSocket!!.isBound) {
+                            if (vm.tcpServerSocket != null && vm.tcpServerSocket!!.isBound) {
                                 try {
-                                    vm.tcpSocket?.close()
-                                    vm.tcpSocket = null
+                                    vm.tcpServerSocket!!.close()
+                                    vm.tcpServerSocket = null
                                 } catch (e: Exception) {
                                     e.printStackTrace()
                                 }
                             } else {
                                 Thread {
                                     try {
-                                        vm.tcpSocket = ServerSocket(port.toInt())
+                                        vm.tcpServerSocket = ServerSocket(port.toInt())
                                     } catch (e: Exception) {
-                                        vm.tcpSocket = null
+                                        vm.tcpServerSocket = null
+                                        vm.tcpClients.clear()
                                         e.printStackTrace()
                                         requireActivity().runOnUiThread {
                                             toggle.isChecked = false
                                             editText.error = " Cannot bind to port "
                                             Toast.makeText(
                                                 context,
-                                                "Cannot bind to port",
+                                                "Error",
                                                 Toast.LENGTH_LONG
                                             )
                                                 .show()
@@ -163,23 +206,36 @@ class TCPServerFragment(vm: ConnectionViewModel) : Fragment() {
                                     }
                                     do {
                                         try {
-                                            val client: Socket? = vm.tcpSocket?.accept()
-                                            val clientHandler = TCPClientHandler(client!!) {
-                                                requireActivity().runOnUiThread {
-                                                    vm.tcpResponses.add(0, it)
-                                                    vm.loadTcpResponses()
-                                                    if (clientAdapter.getPosition(client) == -1) {
-                                                        clientAdapter.add(client)
-                                                    }
+                                            val client: Socket? = vm.tcpServerSocket?.accept()
+                                            requireActivity().runOnUiThread {
+                                                if (
+                                                    client != null
+                                                    && clientAdapter.getPosition(client) == -1
+                                                ) {
+                                                    vm.tcpClients.add(client)
+                                                    vm.loadTcpClients()
                                                 }
                                             }
-                                            clientHandler.run()
+                                            val clientHandler =
+                                                TCPClientHandler(
+                                                    tcpViewModel,
+                                                    sharedPreferences!!.getString(
+                                                        getString(R.string.tcp_server_in_buffer),
+                                                        "255"
+                                                    )!!.toInt(),
+                                                    client!!
+                                                ) {
+                                                    vm.tcpServerResponses.add(0, it)
+                                                    vm.loadTcpServerResponses()
+
+                                                }
+                                            clientHandler.start()
 
 
                                         } catch (e: Exception) {
                                             e.printStackTrace()
                                         }
-                                    } while (vm.tcpSocket != null && vm.tcpSocket!!.isBound)
+                                    } while (vm.tcpServerSocket != null && vm.tcpServerSocket!!.isBound)
                                 }.start()
                             }
                             toggle.isEnabled = true
@@ -190,12 +246,21 @@ class TCPServerFragment(vm: ConnectionViewModel) : Fragment() {
                 )
             }
             R.id.action_clear_responses -> {
-                tcpViewModel.udpResponses.clear()
-                tcpViewModel.loadUdpResponses()
+                tcpViewModel.tcpServerResponses.clear()
+                tcpViewModel.loadTcpServerResponses()
             }
 
         }
         return super.onOptionsItemSelected(item)
     }
+
+    override fun onPause() {
+        super.onPause()
+        with(ipPref!!.edit()) {
+            putString("local_port", tcpViewModel.localTcpPort)
+            apply()
+        }
+    }
+
 
 }

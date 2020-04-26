@@ -1,0 +1,60 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory app:title="UDP Settings">
+
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="udp_remember_hosts"
+            app:title="Remember Hosts" />
+
+
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:key="udp_show_sent"
+            app:title="Show Sent Messages " />
+
+
+        <EditTextPreference
+            app:defaultValue="255"
+            app:key="udp_in_buffer"
+            app:title="input Buffer"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="TCP Server">
+
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:key="@string/tcp_server_show_sent"
+            app:title="Show Sent Messages " />
+
+        <EditTextPreference
+            app:defaultValue="255"
+            app:key="@string/tcp_server_in_buffer"
+            app:title="Input Buffer"
+            app:useSimpleSummaryProvider="true" />
+
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="TCP Client">
+        <SwitchPreferenceCompat
+            app:defaultValue="true"
+            app:key="tcp_client_remember_hosts"
+            app:title="Remember Remote Hosts" />
+
+        <SwitchPreferenceCompat
+            app:defaultValue="false"
+            app:key="@string/tcp_client_show_sent"
+            app:title="Show Sent Messages " />
+
+        <EditTextPreference
+            app:defaultValue="255"
+            app:key="@string/tcp_client_in_buffer"
+            app:title="Input Buffer"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>
