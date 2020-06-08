@@ -9,20 +9,20 @@ import java.net.Socket
 
 class ConnectionViewModel : ViewModel() {
     var addresses = mutableListOf<String>()
-    var localPort: String? = null
-    var localTcpPort: String? = null
-    var tcpClientAddress: String? = null
+    var localPort = "33333"
+    var localTcpPort = "33333"
+    var tcpClientAddress = "127.0.0.1:33333"
 
     var udpSocket: DatagramSocket? = null
     var tcpServerSocket: ServerSocket? = null
     var tcpClientSocket: Socket? = null
 
+
     var udpResponses: ArrayList<ProtocolMessage> = ArrayList()
+
     var tcpServerResponses: ArrayList<ProtocolMessage> = ArrayList()
     var tcpClientResponses: ArrayList<ProtocolMessage> = ArrayList()
     var tcpClients: ArrayList<Socket> = ArrayList()
-
-    //lateinit var clientAdapter: ArrayAdapter<Socket>
 
 
     val tcpServerResponsesLive: MutableLiveData<ArrayList<ProtocolMessage>> by lazy {
@@ -41,21 +41,33 @@ class ConnectionViewModel : ViewModel() {
         MutableLiveData<ArrayList<Socket>>()
     }
 
-    fun loadUdpResponses() {
+    @Synchronized
+    fun addUdpResponse(pm: ProtocolMessage) {
+        udpResponses.add(pm)
         udpResponsesLive.postValue(udpResponses)
     }
 
-    fun loadTcpServerResponses() {
+    @Synchronized
+    fun addTcpServerResponse(pm: ProtocolMessage) {
+        tcpServerResponses.add(pm)
         tcpServerResponsesLive.postValue(tcpServerResponses)
     }
 
-    fun loadTcpClientResponses() {
+    @Synchronized
+    fun addTcpClientResponse(pm: ProtocolMessage) {
+        tcpClientResponses.add(pm)
         tcpClientResponsesLive.postValue(tcpClientResponses)
     }
 
-    fun loadTcpClients() {
+    @Synchronized
+    fun updateTcpClients(s: Socket?, op: Int) {
+        if (op == 0) {
+            tcpClients.add(s!!)
+        }
+        if (op == 1) {
+            tcpClients.remove(s!!)
+        }
         tcpClientsLive.postValue(tcpClients)
-
     }
 
     override fun onCleared() {
@@ -65,6 +77,8 @@ class ConnectionViewModel : ViewModel() {
             udpSocket = null
             tcpServerSocket?.close()
             tcpServerSocket = null
+            tcpClientSocket?.close()
+            tcpClientSocket = null
         } catch (e: Exception) {
 
         }

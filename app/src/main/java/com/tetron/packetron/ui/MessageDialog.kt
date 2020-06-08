@@ -19,11 +19,11 @@ class MessageDialog(pm: ProtocolMessage, lsnr: (ProtocolMessage) -> Unit) : Dial
         return activity?.let {
             dialogView = View.inflate(activity, R.layout.message_dialog, null)
             val builder = AlertDialog.Builder(it)
-            builder.setTitle("UDP Connection")
+            builder.setTitle("Enter a reply")
             builder.setView(dialogView)
             builder.setNegativeButton("Cancel", null)
             builder.setPositiveButton("Send") { _, _ ->
-                val newPm: ProtocolMessage =
+                val newPm =
                     ProtocolMessage(
                         dialogView!!.replay_message.text.toString(),
                         protocolMessage.socket

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/recycler_item_layout"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="start"
+    android:layout_marginBottom="7dp"
+    android:background="#97AD9A"
+    android:orientation="vertical"
+    android:paddingVertical="2.5dp">
+
+    <TextView
+        android:id="@+id/address_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="7dp"
+        android:textColor="@android:color/black"
+        android:textSize="12sp"
+        tools:text="/127.0.0.1:33333" />
+
+    <TextView
+        android:id="@+id/text_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingHorizontal="7dp"
+        android:textColor="@android:color/black"
+        android:textSize="18sp"
+        tools:text="Hello this is a test message" />
+
+
+</LinearLayout>
+

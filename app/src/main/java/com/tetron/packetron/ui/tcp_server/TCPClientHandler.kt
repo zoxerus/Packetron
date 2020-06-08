@@ -8,12 +8,10 @@ import java.net.Socket
 class TCPClientHandler(
     private val vm: ConnectionViewModel,
     private val inBuffer: Int,
-    client: Socket,
-    act: (ProtocolMessage) -> Unit
+    client: Socket
 ) : Thread() {
     private val clientSocket: Socket = client
     private val reader: InputStream = clientSocket.getInputStream()
-    private val action = act
 
 
     override fun run() {
@@ -22,17 +20,17 @@ class TCPClientHandler(
         var length = 0
         do {
             if (length != 0) {
-                action(
-                    ProtocolMessage(
-                        String(message, 0, length),
-                        clientSocket
-                    )
+                val pm = ProtocolMessage(
+                    String(message, 0, length),
+                    clientSocket
                 )
+                vm.addTcpServerResponse(pm)
+
             }
             length = reader.read(message)
         } while (length != -1 && vm.tcpServerSocket != null)
-        vm.tcpClients.remove(clientSocket)
-        vm.loadTcpClients()
+
+        vm.updateTcpClients(clientSocket, 1)
         interrupt()
     }
 }

@@ -6,19 +6,28 @@
     <item android:title="@string/connection">
         <menu>
             <item
-                android:id="@+id/nav_udp"
                 android:icon="@drawable/ic_send_receive"
                 android:title="@string/menu_udp_send_receive" />
             <item
                 android:id="@+id/nav_tcp_server"
-                android:icon="@drawable/ic_send"
+                android:icon="@drawable/ic_computer_black_24dp"
                 android:title="@string/tcp_server" />
             <item
                 android:id="@+id/nav_tcp_client"
-                android:icon="@drawable/ic_send"
+                android:icon="@drawable/ic_smartphone_black_24dp"
                 android:title="@string/tcp_client" />
+
         </menu>
 
     </item>
+    <item android:title="About">
+        <menu>
+            <item
+                android:id="@+id/about_us"
+                android:icon="@drawable/ic_outline_info_24"
+                android:title="About Us" />
+        </menu>
 
+
+    </item>
 </menu>

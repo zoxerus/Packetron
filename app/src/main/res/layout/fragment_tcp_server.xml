@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@android:color/background_light"
+    android:background="@color/backgroundGreen"
 
     android:orientation="horizontal"
     android:padding="10dp"
@@ -12,9 +12,10 @@
 
 
     <Spinner
+        android:layout_width="0dp"
         android:id="@+id/tcp_address_spinner"
         android:layout_height="wrap_content"
-        android:layout_width="match_parent"
+        android:layout_marginBottom="15dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/message_to_send"
@@ -24,15 +25,18 @@
     <EditText
         android:id="@+id/message_to_send"
         android:layout_width="0dp"
+        android:background="@drawable/round_corner_rectangle"
+        android:lines="2"
         android:layout_height="wrap_content"
         android:layout_marginVertical="5dp"
         android:layout_marginTop="15dp"
         android:autofillHints="@string/type_a_message"
         android:hint="@string/type_a_message"
         android:inputType="textCapSentences|textMultiLine|textAutoCorrect"
-        android:lines="1"
+        android:paddingHorizontal="7dp"
         android:maxLength="255"
         android:scrollbars="vertical"
+        app:layout_constraintTop_toBottomOf="@id/tcp_address_spinner"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/send_button"
         app:layout_constraintHorizontal_weight=".8"
@@ -42,12 +46,13 @@
     <Button
         android:id="@+id/send_button"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:layout_marginStart="15dp"
         android:layout_marginLeft="15dp"
         android:text="@string/send"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/message_to_send"
         app:layout_constraintHorizontal_weight=".2"
         app:layout_constraintStart_toEndOf="@id/message_to_send" />
 

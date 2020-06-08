@@ -1,28 +1,12 @@
 <resources>
     <string name="app_name">Packetron</string>
-    <string name="navigation_drawer_open">Open navigation drawer</string>
-    <string name="navigation_drawer_close">Close navigation drawer</string>
-    <string name="nav_header_title">Android Studio</string>
-    <string name="nav_header_subtitle">android.studio@android.com</string>
     <string name="nav_header_desc">Navigation header</string>
     <string name="action_settings">Settings</string>
 
     <string name="menu_udp_send_receive">UDP Send and Receive</string>
-    <string name="menu_udp_send">UDP Send Only</string>
-    <string name="menu_udp_receive">UDP Receive Only</string>
-    <string name="menu_tools">Tools</string>
-    <string name="menu_share">Share</string>
-    <string name="menu_send">Send</string>
-    <string name="nav_title_tcp">TCP</string>
-    <string name="nav_title_udp">UDP</string>
     <string name="my_ip">My IP</string>
-    <string name="local_port">Local Port</string>
-    <string name="clients">clients</string>
-    <string name="ip_address">IP Address</string>
-    <string name="port">Port</string>
     <string name="type_a_message">Type a message</string>
     <string name="send">Send</string>
-    <string name="text_response">Response:</string>
     <string name="text_connect">Connect</string>
 
     <string name="text_disconnect">Disconnect</string>
@@ -35,24 +19,25 @@
     <string name="title_activity_settings">Settings</string>
 
     <!-- Preference Titles -->
-    <string name="messages_header">Messages</string>
-    <string name="sync_header">Sync</string>
 
     <!-- Messages Preferences -->
-    <string name="signature_title">Your signature</string>
-    <string name="reply_title">Default reply action</string>
 
     <!-- Sync Preferences -->
-    <string name="sync_title">Sync email periodically</string>
-    <string name="attachment_title">Download incoming attachments</string>
-    <string name="attachment_summary_on">Automatically download attachments for incoming emails
-    </string>
-    <string name="attachment_summary_off">Only download attachments when manually requested</string>
-    <string name="tcp_server_remember_hosts">tcp_server_remember_hosts</string>
     <string name="tcp_server_show_sent">tcp_server_show_sent</string>
     <string name="tcp_server_in_buffer">tcp_server_in_buffer</string>
     <string name="tcp_client_show_sent">tcp_client_show_sent</string>
     <string name="tcp_client_in_buffer">tcp_client_in_buffer</string>
+    <string name="_127_0_0_1_33333">127.0.0.1:33333</string>
+    <string name="udp_send_from_server">udp_send_from_server</string>
+
+    <string name="about_me_text">
+        This App is made for testing UDP/TCP enabled devices, We are willing to always
+        improve and implement new features, so we really appreciate you taking the time
+        after using this app to write us a review including what you liked and what you
+        didn\'t like about our app. Also feel free to ask for any missing features and we
+        will take your request into consideration!
+    </string>
+    <string name="write_a_review_link"> <u>Write a Review!</u> </string>
 
 
 </resources>

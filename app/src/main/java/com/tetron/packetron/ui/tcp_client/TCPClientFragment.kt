@@ -33,6 +33,7 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment() {
     private lateinit var responseAdapter: RecyclerView.Adapter<*>
     private lateinit var viewManager: RecyclerView.LayoutManager
 
+    constructor() : this(ConnectionViewModel())
 
     companion object {
         fun newInstance(vm: ConnectionViewModel): TCPClientFragment {
@@ -43,6 +44,7 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
+        retainInstance = true
         ipPref = activity?.getSharedPreferences(
             "ip_preferences", Context.MODE_PRIVATE
         )
@@ -52,7 +54,8 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment() {
     override fun onResume() {
         super.onResume()
         requireActivity().title = "TCP Client"
-        tcpClientViewModel.tcpClientAddress = ipPref!!.getString("client_address", "")
+        tcpClientViewModel.tcpClientAddress =
+            ipPref!!.getString("client_address", "127.0.0.1:33333")!!
     }
 
     override fun onPause() {
@@ -90,10 +93,9 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment() {
                             )
                         ) {
                             val pm = ProtocolMessage(msg)
-                            pm.messageIp = "localhost"
+                            pm.messageIp = "//127.0.0.1"
                             pm.messagePort = tcpClientViewModel.tcpClientSocket!!.port.toString()
-                            tcpClientViewModel.tcpClientResponses.add(0, pm)
-                            tcpClientViewModel.loadTcpClientResponses()
+                            tcpClientViewModel.addTcpClientResponse(pm)
                         }
                     } catch (e: java.lang.Exception) {
                         e.printStackTrace()
@@ -113,6 +115,17 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment() {
                             pm.socket.getOutputStream()
                                 .write(it.messageText.toByteArray())
                             pm.socket.getOutputStream().flush()
+                            if (sharedPreferences.getBoolean(
+                                    getString(R.string.tcp_client_show_sent),
+                                    false
+                                )
+                            ) {
+                                val newPm = ProtocolMessage(it.messageText)
+                                newPm.messageIp = "//127.0.0.1"
+                                newPm.messagePort =
+                                    tcpClientViewModel.tcpClientSocket!!.port.toString()
+                                tcpClientViewModel.addTcpClientResponse(newPm)
+                            }
                         } catch (e: Exception) {
                             requireActivity().runOnUiThread {
                                 Toast.makeText(
@@ -132,8 +145,8 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment() {
 
         tcpClientViewModel.tcpClientResponsesLive.observe(
             viewLifecycleOwner,
-            Observer<List<ProtocolMessage>> { _ ->
-                responseAdapter.notifyDataSetChanged()
+            Observer<List<ProtocolMessage>> {
+                recyclerView.scrollToPosition(tcpClientViewModel.tcpClientResponses.size - 1)
             })
 
         Log.e(LOG_TAG, "View Created")
@@ -165,7 +178,7 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment() {
                         { vm, address, toggle, editText ->
                             if (sharedPreferences.getBoolean("tcp_client_remember_hosts", true)) {
                                 tcpClientViewModel.tcpClientAddress = address
-                            } else tcpClientViewModel.tcpClientAddress = null
+                            }
 
                             Log.e("TCP Client", " button changed status ")
                             toggle.isEnabled = false
@@ -188,10 +201,10 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment() {
                                         e.printStackTrace()
                                         requireActivity().runOnUiThread {
                                             toggle.isChecked = false
-                                            editText.error = " Cannot bind to port "
+                                            editText.error = " Cannot connect "
                                             Toast.makeText(
                                                 context,
-                                                "Cannot bind to port",
+                                                "check IP and Port",
                                                 Toast.LENGTH_LONG
                                             )
                                                 .show()
@@ -207,17 +220,14 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment() {
                                                 .read(message) != -1
                                         ) {
 
-                                            vm.tcpClientResponses.add(
-                                                0,
+                                            vm.addTcpClientResponse(
                                                 ProtocolMessage(String(message), vm.tcpClientSocket)
                                             )
-                                            vm.loadTcpClientResponses()
 
                                         }
                                     } catch (e: Exception) {
                                         e.printStackTrace()
                                     }
-                                    Log.e("ended", "ended")
                                     try {
                                         vm.tcpClientSocket?.close()
                                         vm.tcpClientSocket = null
@@ -236,7 +246,7 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment() {
             }
             R.id.action_clear_responses -> {
                 tcpClientViewModel.tcpClientResponses.clear()
-                tcpClientViewModel.loadTcpClientResponses()
+                responseAdapter.notifyDataSetChanged()
             }
 
         }
