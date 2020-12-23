@@ -5,34 +5,25 @@ import android.os.Bundle
 import android.view.View
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
-import com.tetron.packetron.ProtocolMessage
 import com.tetron.packetron.R
 import kotlinx.android.synthetic.main.message_dialog.view.*
 
 
-class MessageDialog(pm: ProtocolMessage, lsnr: (ProtocolMessage) -> Unit) : DialogFragment() {
-    private val protocolMessage = pm
+class MessageDialog(
+    var dialogueTitle: String,
+    var positiveButtonText: String,
+    val onPositiveButtonListener: (String) -> Unit
+) : DialogFragment() {
     private var dialogView: View? = null
-    private val listener = lsnr
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        retainInstance = true
         return activity?.let {
             dialogView = View.inflate(activity, R.layout.message_dialog, null)
             val builder = AlertDialog.Builder(it)
-            builder.setTitle("Enter a reply")
+            builder.setTitle(dialogueTitle)
             builder.setView(dialogView)
             builder.setNegativeButton("Cancel", null)
-            builder.setPositiveButton("Send") { _, _ ->
-                val newPm =
-                    ProtocolMessage(
-                        dialogView!!.replay_message.text.toString(),
-                        protocolMessage.socket
-                    )
-                newPm.messageIp = protocolMessage.messageIp
-                newPm.messagePort = protocolMessage.messagePort
-                listener(
-                    newPm
-                )
+            builder.setPositiveButton(positiveButtonText) { _, _ ->
+                onPositiveButtonListener(dialogView!!.replay_message.text.toString())
             }
             builder.create()
         } ?: throw IllegalStateException("Activity cannot be null")

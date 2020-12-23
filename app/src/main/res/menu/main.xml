@@ -3,27 +3,42 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <item
-        android:visible="false"
         android:id="@+id/action_connect"
-        android:orderInCategory="100"
+        android:orderInCategory="1"
         android:title="@string/text_connect"
         app:showAsAction="ifRoom" />
     <item
         android:id="@+id/action_clear_responses"
-        android:orderInCategory="100"
+        android:orderInCategory="2"
         android:title="@string/text_clear_responses"
-        android:visible="false"
+        android:visible="true"
         app:showAsAction="never" />
+    <item
+        android:id="@+id/message_templates"
+        android:orderInCategory="3"
+        android:title="@string/message_templates"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/mm_action_save_conversation"
+        android:orderInCategory="4"
+        android:title="@string/save_this_conversation"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/mm_action_show_conversation"
+        android:orderInCategory="5"
+        android:title="@string/show_saved_conversations"
+        app:showAsAction="never" />
+
 
     <item
         android:id="@+id/action_view_local_ip"
-        android:orderInCategory="100"
+        android:orderInCategory="6"
         android:title="@string/my_ip"
         app:showAsAction="never" />
 
     <item
         android:id="@+id/action_settings"
-        android:orderInCategory="100"
+        android:orderInCategory="7"
         android:title="@string/action_settings"
         app:showAsAction="never" />
 

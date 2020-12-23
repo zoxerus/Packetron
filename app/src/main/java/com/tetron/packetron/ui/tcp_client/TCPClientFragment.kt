@@ -1,22 +1,31 @@
 package com.tetron.packetron.ui.tcp_client
 
+import android.app.Activity
+import android.app.Application
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
-import android.view.*
+import android.view.LayoutInflater
+import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.ActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.tetron.packetron.ProtocolMessage
 import com.tetron.packetron.R
+import com.tetron.packetron.db.conversations.ConversationMessage
 import com.tetron.packetron.ui.ConnectionDialog
 import com.tetron.packetron.ui.ConnectionViewModel
 import com.tetron.packetron.ui.MessageDialog
 import com.tetron.packetron.ui.ResponseAdapter
+import com.tetron.packetron.ui.message_templates.SavedMessageActivity
 import com.tetron.packetron.ui.udp_send_receive.LOG_TAG
 import kotlinx.android.synthetic.main.fragment_tcp_client.*
 import kotlinx.android.synthetic.main.fragment_tcp_client.view.*
@@ -33,7 +42,7 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment() {
     private lateinit var responseAdapter: RecyclerView.Adapter<*>
     private lateinit var viewManager: RecyclerView.LayoutManager
 
-    constructor() : this(ConnectionViewModel())
+    constructor() : this(ConnectionViewModel(Application()))
 
     companion object {
         fun newInstance(vm: ConnectionViewModel): TCPClientFragment {
@@ -41,10 +50,18 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment() {
         }
     }
 
+    private val startForResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val intent = result.data
+                tcpClientViewModel.tcpClientMessageToSend =
+                    intent?.getStringExtra(getString(R.string.selected_message_template))!!
+            }
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
-        retainInstance = true
         ipPref = activity?.getSharedPreferences(
             "ip_preferences", Context.MODE_PRIVATE
         )
@@ -56,6 +73,7 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment() {
         requireActivity().title = "TCP Client"
         tcpClientViewModel.tcpClientAddress =
             ipPref!!.getString("client_address", "127.0.0.1:33333")!!
+        message_to_send.setText(tcpClientViewModel.tcpClientMessageToSend)
     }
 
     override fun onPause() {
@@ -92,9 +110,18 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment() {
                                 false
                             )
                         ) {
-                            val pm = ProtocolMessage(msg)
-                            pm.messageIp = "//127.0.0.1"
-                            pm.messagePort = tcpClientViewModel.tcpClientSocket!!.port.toString()
+                            val pm = ConversationMessage(
+                                timeId = System.currentTimeMillis(),
+                                message = msg, direction = 0,
+                                localPort = tcpClientViewModel.tcpClientSocket!!.localPort.toString(),
+                                localIp = tcpClientViewModel.tcpClientSocket!!.localAddress.toString()
+                                    .removePrefix("/"),
+                                remotePort = tcpClientViewModel.tcpClientSocket!!.port.toString(),
+                                remoteIp = tcpClientViewModel.tcpClientSocket!!.remoteSocketAddress.toString()
+                                    .removePrefix("/"),
+                                name = ""
+                            )
+                            pm.socket = tcpClientViewModel.tcpClientSocket
                             tcpClientViewModel.addTcpClientResponse(pm)
                         }
                     } catch (e: java.lang.Exception) {
@@ -107,23 +134,30 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment() {
 
         viewManager = LinearLayoutManager(requireContext().applicationContext)
         responseAdapter = ResponseAdapter(tcpClientViewModel.tcpClientResponses) { pm ->
-            MessageDialog(pm)
+            MessageDialog("Enter a Reply", "Send")
             {
-                if (pm.socket != null && pm.socket.isBound) {
+                if (pm.socket != null && pm.socket!!.isBound) {
                     Thread {
                         try {
-                            pm.socket.getOutputStream()
-                                .write(it.messageText.toByteArray())
-                            pm.socket.getOutputStream().flush()
+                            pm.socket!!.getOutputStream()
+                                .write(it.toByteArray())
+                            pm.socket!!.getOutputStream().flush()
                             if (sharedPreferences.getBoolean(
                                     getString(R.string.tcp_client_show_sent),
                                     false
                                 )
                             ) {
-                                val newPm = ProtocolMessage(it.messageText)
-                                newPm.messageIp = "//127.0.0.1"
-                                newPm.messagePort =
-                                    tcpClientViewModel.tcpClientSocket!!.port.toString()
+                                val newPm = ConversationMessage(
+                                    timeId = System.currentTimeMillis(),
+                                    message = it, direction = 0,
+                                    localIp = pm.socket!!.localAddress.toString().removePrefix("/"),
+                                    localPort = pm.socket!!.localPort.toString(),
+                                    remoteIp = pm.socket!!.remoteSocketAddress.toString()
+                                        .removePrefix("/"),
+                                    remotePort = pm.socket!!.port.toString(),
+                                    name = ""
+                                )
+                                newPm.socket = pm.socket
                                 tcpClientViewModel.addTcpClientResponse(newPm)
                             }
                         } catch (e: Exception) {
@@ -140,12 +174,12 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment() {
 
                 }
             }
-                .showNow(requireActivity().supportFragmentManager, "Replay Message")
+                .showNow(requireActivity().supportFragmentManager, "Replay ConversationMessage")
         }
 
         tcpClientViewModel.tcpClientResponsesLive.observe(
             viewLifecycleOwner,
-            Observer<List<ProtocolMessage>> {
+            Observer<List<ConversationMessage>> {
                 recyclerView.scrollToPosition(tcpClientViewModel.tcpClientResponses.size - 1)
             })
 
@@ -158,11 +192,7 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment() {
         }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        super.onCreateOptionsMenu(menu, inflater)
-        menu.findItem(R.id.action_connect).isVisible = true
-        menu.findItem(R.id.action_clear_responses).isVisible = true
-    }
+
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
@@ -219,10 +249,19 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment() {
                                         while (vm.tcpClientSocket!!.getInputStream()
                                                 .read(message) != -1
                                         ) {
-
-                                            vm.addTcpClientResponse(
-                                                ProtocolMessage(String(message), vm.tcpClientSocket)
+                                            val cm = ConversationMessage(
+                                                timeId = System.currentTimeMillis(),
+                                                message = String(message), direction = 1,
+                                                localPort = vm.tcpClientSocket!!.localPort.toString(),
+                                                localIp = vm.tcpClientSocket!!.localAddress.toString()
+                                                    .removePrefix("/"),
+                                                remotePort = vm.tcpClientSocket!!.port.toString(),
+                                                remoteIp = vm.tcpClientSocket!!.remoteSocketAddress.toString()
+                                                    .removePrefix("/"),
+                                                name = ""
                                             )
+                                            cm.socket = vm.tcpClientSocket
+                                            vm.addTcpClientResponse(cm)
 
                                         }
                                     } catch (e: Exception) {
@@ -247,6 +286,9 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment() {
             R.id.action_clear_responses -> {
                 tcpClientViewModel.tcpClientResponses.clear()
                 responseAdapter.notifyDataSetChanged()
+            }
+            R.id.message_templates -> {
+                startForResult.launch(Intent(activity, SavedMessageActivity::class.java))
             }
 
         }

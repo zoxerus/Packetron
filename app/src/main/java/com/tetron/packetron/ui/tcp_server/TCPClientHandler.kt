@@ -1,6 +1,6 @@
 package com.tetron.packetron.ui.tcp_server
 
-import com.tetron.packetron.ProtocolMessage
+import com.tetron.packetron.db.conversations.ConversationMessage
 import com.tetron.packetron.ui.ConnectionViewModel
 import java.io.InputStream
 import java.net.Socket
@@ -20,12 +20,17 @@ class TCPClientHandler(
         var length = 0
         do {
             if (length != 0) {
-                val pm = ProtocolMessage(
-                    String(message, 0, length),
-                    clientSocket
+                val pm = ConversationMessage(
+                    timeId = System.currentTimeMillis(),
+                    message = String(message, 0, length), direction = 1,
+                    localIp = clientSocket.localAddress.toString(),
+                    localPort = clientSocket.localPort.toString(),
+                    remoteIp = clientSocket.remoteSocketAddress.toString(),
+                    remotePort = clientSocket.port.toString(),
+                    name = ""
                 )
+                pm.socket = clientSocket
                 vm.addTcpServerResponse(pm)
-
             }
             length = reader.read(message)
         } while (length != -1 && vm.tcpServerSocket != null)

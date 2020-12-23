@@ -10,13 +10,13 @@ import android.util.DisplayMetrics
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
-import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
 import com.google.android.material.navigation.NavigationView
@@ -50,7 +50,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private var backPressedTime: Long = 0
     private lateinit var drawerLayout: DrawerLayout
 
-    private val connectionViewModel: ConnectionViewModel by viewModels()
+    private lateinit var connectionViewModel: ConnectionViewModel
 
 
     // Determine the screen width (less decorations) to use for the ad width.
@@ -75,15 +75,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-/*        if (BuildConfig.DEBUG ) {
-            StrictMode.setVmPolicy(
-                StrictMode.VmPolicy.Builder()
-                    .detectNonSdkApiUsage()
-                    .detectAll()
-                    .penaltyLog()
-                    .build()
-            )
-        }*/
         setContentView(R.layout.activity_main)
 
         val toolbar: Toolbar = findViewById(R.id.toolbar)
@@ -97,6 +88,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         toolbar.setNavigationOnClickListener {
             drawerLayout.openDrawer(GravityCompat.START)
         }
+        connectionViewModel = ViewModelProvider(this).get(ConnectionViewModel::class.java)
 
         udpSendReceiveFragment =
             UDPSendReceiveFragment.newInstance(connectionViewModel)
@@ -211,28 +203,29 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         when (item.itemId) {
             R.id.action_view_local_ip -> {
                 val fmd = ShowIpDialog()
-                fmd.setIpAddress(getIpAddress(this)!!)
+                fmd.setIpAddress(getInetAddress(this).toString().removePrefix("/"))
                 fmd.showNow(supportFragmentManager, "IP Dialog")
             }
             R.id.action_settings -> {
                 val settingsIntent = Intent(this, SettingsActivity::class.java)
                 startActivity(settingsIntent)
             }
+            R.id.message_templates -> {
+/*                val templateIntent = Intent(this, SavedMessageActivity::class.java)
+                startActivity(templateIntent)*/
+            }
         }
 
         return super.onOptionsItemSelected(item)
     }
 
-    private fun getIpAddress(context: Context): String? {
+    fun getInetAddress(context: Context): InetAddress {
         val wifiManager = context.applicationContext
             .getSystemService(Context.WIFI_SERVICE) as WifiManager
-        var ipAddress: String =
-            intToInetAddress(wifiManager.dhcpInfo.ipAddress).toString()
-        ipAddress = ipAddress.substring(1)
-        return ipAddress
+        return intToInetAddress(wifiManager.dhcpInfo.ipAddress)
     }
 
-    private fun intToInetAddress(hostAddress: Int): InetAddress {
+    fun intToInetAddress(hostAddress: Int): InetAddress {
         val addressBytes = byteArrayOf(
             (0xff and hostAddress).toByte(),
             (0xff and (hostAddress shr 8)).toByte(),

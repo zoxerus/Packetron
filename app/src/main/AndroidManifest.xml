@@ -6,6 +6,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission
         android:name="android.permission.WAKE_LOCK"
         tools:node="remove" />
@@ -17,16 +18,17 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+        <activity android:name=".ui.saved_conversations.SavedConversationActivity" />
+        <activity android:name=".ui.message_templates.SavedMessageActivity" />
 
-        <!-- Sample AdMob App ID: ca-app-pub-3940256099942544~3347511713 -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="@string/APP_ID" />
 
         <activity
-            android:theme="@style/AppTheme"
             android:name=".SettingsActivity"
             android:label="@string/title_activity_settings"
+            android:theme="@style/AppTheme"
             tools:targetApi="jelly_bean" />
         <activity
             android:name=".MainActivity"
@@ -35,8 +37,11 @@
             android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
+
                 <action android:name="android.intent.action.VIEW" />
+
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
