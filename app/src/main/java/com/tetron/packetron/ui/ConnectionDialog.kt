@@ -23,7 +23,6 @@ class ConnectionDialog(
     private var dialogView: View? = null
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        retainInstance = true
         return activity?.let {
             dialogView = View.inflate(activity, R.layout.dialog_connection, null)
 

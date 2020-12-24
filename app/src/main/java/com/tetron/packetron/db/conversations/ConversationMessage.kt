@@ -24,6 +24,7 @@ data class ConversationMessage(
     @Ignore
     var socket: Socket? = null
 
+    @Ignore
     fun addressToString(): String {
         return if (direction == 0) {
             "$localIp:$localPort:\t\t\t\t${sdf.format(timeId)}"
@@ -32,10 +33,12 @@ data class ConversationMessage(
         }
     }
 
+    @Ignore
     override fun toString(): String {
         return "$remoteIp:$remotePort: \t$timeId"
     }
 
+    @Ignore
     fun print(): String {
         return "\nTime ID: $timeId\nDirection: $direction\nMessage: $message\nLocal IP: " +
                 "$localIp\nLocal Port: $localPort\nRemote IP: $remoteIp\nRemote Port: " +

@@ -41,7 +41,5 @@ class ConversationViewModel(application: Application) : AndroidViewModel(applica
         return repository.getAll().value
     }
 
-    fun getNames(): List<ConversationMessage>? {
-        return repository.getNames()
-    }
+
 }

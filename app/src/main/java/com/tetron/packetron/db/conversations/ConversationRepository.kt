@@ -19,7 +19,5 @@ class ConversationRepository(private val conversationDao: ConversationDao) {
         return allConversations
     }
 
-    fun getNames(): List<ConversationMessage> {
-        return conversationDao.getNames()
-    }
+
 }
