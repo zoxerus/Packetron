@@ -35,7 +35,7 @@ class ConversationFragment: Fragment() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setHasOptionsMenu(true)
+        setHasOptionsMenu(false)
         conversationViewModel = ViewModelProvider(this).get(ConversationViewModel::class.java)
     }
 

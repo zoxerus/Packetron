@@ -29,7 +29,8 @@ class ConversationRepository(private val conversationDao: ConversationDao) {
     }
 
     fun deleteAll() {
-        conversationDao.deleteAll()
+        conversationDao.deleteConversationList()
+        conversationDao.deleteSavedConversations()
     }
 
     fun deleteMany(list:List<Int>){

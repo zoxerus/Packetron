@@ -29,6 +29,9 @@ interface ConversationDao {
     fun deleteMany(idList: List<Int>)
 
     @Query("DELETE FROM conversation_list")
-    fun deleteAll()
+    fun deleteConversationList()
+
+    @Query("DELETE FROM saved_conversations")
+    fun deleteSavedConversations()
 
 }

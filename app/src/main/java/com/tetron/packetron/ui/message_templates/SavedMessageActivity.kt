@@ -34,6 +34,10 @@ class SavedMessageActivity : AppCompatActivity(), View.OnClickListener {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_saved_message)
 
+        addTemplateET = findViewById(R.id.et_add_message_template)
+        addTemplateBTN = findViewById(R.id.bt_add_message_template)
+        cancelTemplateBTN = findViewById(R.id.bt_cancel_message_template)
+
         recyclerView = findViewById(R.id.message_templates_rv)
         adapter = MessageAdapter(this, {
             val replyIntent = Intent()
