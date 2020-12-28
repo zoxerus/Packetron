@@ -75,4 +75,9 @@ class ResponseAdapter(
 
 
     }
+
+    fun setResponses(r:List<ConversationMessage>){
+        mDataSet = r
+        notifyDataSetChanged()
+    }
 }

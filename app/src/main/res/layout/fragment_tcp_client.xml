@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/backgroundGreen"
+    android:background="@color/background"
     android:orientation="horizontal"
     android:padding="10dp"
     tools:context="ui.udp_send_receive.UDPSendReceiveFragment">
@@ -54,7 +54,9 @@
         app:layout_constraintBottom_toTopOf="@id/send_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        tools:listitem="@layout/recycler_view_packet_sent"
+        />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -8,6 +8,8 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.widget.Button
+import android.widget.EditText
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -16,7 +18,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.tetron.packetron.R
 import com.tetron.packetron.db.templates.MessageTemplate
 import com.tetron.packetron.db.templates.TemplateViewModel
-import kotlinx.android.synthetic.main.activity_saved_message.*
 
 
 class SavedMessageActivity : AppCompatActivity(), View.OnClickListener {
@@ -24,6 +25,10 @@ class SavedMessageActivity : AppCompatActivity(), View.OnClickListener {
     private lateinit var adapter: MessageAdapter
     private lateinit var recyclerView: RecyclerView
     private var msgId: Long = -1
+
+    private lateinit var addTemplateET: EditText
+    private lateinit var addTemplateBTN: Button
+    private lateinit var cancelTemplateBTN: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,7 +51,7 @@ class SavedMessageActivity : AppCompatActivity(), View.OnClickListener {
                     // action edit
                     1 -> {
                         msgId = msg.id
-                        et_add_message_template.setText(msg.message)
+                        addTemplateET.setText(msg.message)
                     }
 
                     // action copy
@@ -72,8 +77,8 @@ class SavedMessageActivity : AppCompatActivity(), View.OnClickListener {
         })
         recyclerView.adapter = adapter
 
-        bt_add_message_template.setOnClickListener(this)
-        bt_cancel_message_template.setOnClickListener(this)
+        addTemplateBTN.setOnClickListener(this)
+        cancelTemplateBTN.setOnClickListener(this)
         registerForContextMenu(recyclerView)
     }
 
@@ -104,16 +109,16 @@ class SavedMessageActivity : AppCompatActivity(), View.OnClickListener {
                 if (msgId == -1L) {
                     msgId = System.currentTimeMillis()
                 }
-                val msgText = et_add_message_template.text.toString()
+                val msgText = addTemplateET.text.toString()
                 val msg = MessageTemplate(id = msgId)
                 msg.message = msgText
                 msgViewModel.insert(msg)
-                et_add_message_template.text = null
+                addTemplateET.text = null
                 msgId = -1L
             }
 
             R.id.bt_cancel_message_template -> {
-                et_add_message_template.text = null
+                addTemplateET.text = null
                 msgId = -1L
             }
         }

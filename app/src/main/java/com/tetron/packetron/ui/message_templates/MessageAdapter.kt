@@ -18,7 +18,7 @@ class MessageAdapter internal constructor(
 ) : RecyclerView.Adapter<MessageAdapter.MessageViewHolder>() {
 
     private val inflater: LayoutInflater = LayoutInflater.from(context)
-    private var messages = emptyList<MessageTemplate>() // Cached copy of words
+    private var messages = emptyList<MessageTemplate>()
     val checkedMessages = ArrayList<Long>()
 
 

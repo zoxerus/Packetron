@@ -12,6 +12,7 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ArrayAdapter
+import android.widget.Button
 import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -29,7 +30,6 @@ import com.tetron.packetron.ui.ResponseAdapter
 import com.tetron.packetron.ui.message_templates.SavedMessageActivity
 import com.tetron.packetron.ui.udp_send_receive.LOG_TAG
 import kotlinx.android.synthetic.main.fragment_tcp_server.*
-import kotlinx.android.synthetic.main.fragment_tcp_server.view.*
 import java.net.ServerSocket
 import java.net.Socket
 
@@ -45,6 +45,8 @@ class TCPServerFragment(vm: ConnectionViewModel) : Fragment() {
 
 
     private lateinit var tcpClientAdapter: ArrayAdapter<Socket>
+
+    private lateinit var sendBTN: Button
 
     constructor() : this(ConnectionViewModel(Application()))
 
@@ -86,8 +88,8 @@ class TCPServerFragment(vm: ConnectionViewModel) : Fragment() {
     }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        view.send_button.setOnClickListener {
+        sendBTN = view.findViewById(R.id.send_button)
+        sendBTN.setOnClickListener {
             val pos = tcp_address_spinner.selectedItemPosition
             Log.e("pos ", pos.toString())
             if (pos == -1) {
@@ -181,12 +183,12 @@ class TCPServerFragment(vm: ConnectionViewModel) : Fragment() {
 
         tcpViewModel.tcpServerResponsesLive.observe(
             viewLifecycleOwner,
-            Observer<List<ConversationMessage>> {
+             {
                 recyclerView.scrollToPosition(tcpViewModel.tcpServerResponses.size - 1)
             })
         tcpViewModel.tcpClientsLive.observe(
             viewLifecycleOwner,
-            Observer<List<Socket>> {
+            {
                 tcpClients.clear()
                 tcpClients.addAll(tcpViewModel.tcpClients)
                 tcpClientAdapter.notifyDataSetChanged()

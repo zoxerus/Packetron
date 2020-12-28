@@ -7,7 +7,7 @@
     android:layout_height="wrap_content"
     android:layout_gravity="start"
     android:layout_marginBottom="7dp"
-    android:background="#97AD9A"
+    android:background="@color/accent2"
     android:orientation="vertical"
     android:paddingVertical="2.5dp">
 
@@ -16,7 +16,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingHorizontal="7dp"
-        android:textColor="@android:color/black"
+        android:textColor="@color/text1"
         android:textSize="12sp"
         tools:text="/127.0.0.1:33333" />
 
@@ -25,7 +25,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingHorizontal="7dp"
-        android:textColor="@android:color/black"
+        android:textColor="@color/text1"
         android:textSize="18sp"
         tools:text="Hello this is a test message" />
 

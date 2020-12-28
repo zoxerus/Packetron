@@ -17,6 +17,7 @@ class ConversationViewModel(application: Application) : AndroidViewModel(applica
     //   the UI when the data actually changes.
     // - Repository is completely separated from the UI through the ViewModel.
     val allConversations: LiveData<List<ConversationMessage>>
+    val conversationsTable: LiveData<List<ConversationsTable>>
 
     private val selectedConversations = emptyList<Long>()
 
@@ -24,6 +25,7 @@ class ConversationViewModel(application: Application) : AndroidViewModel(applica
         val conversationDao = AppDatabase.getDatabase(application).conversationDao()
         repository = ConversationRepository(conversationDao)
         allConversations = repository.allConversations
+        conversationsTable = repository.conversationList
     }
 
     /**
@@ -33,12 +35,32 @@ class ConversationViewModel(application: Application) : AndroidViewModel(applica
         repository.insert(msg)
     }
 
+    fun insertConversation(msg: ConversationsTable) = viewModelScope.launch(Dispatchers.IO) {
+        repository.insertConversation(msg)
+    }
+
     fun insertMany(msgList: List<ConversationMessage>) = viewModelScope.launch(Dispatchers.IO) {
         repository.insertMany(msgList)
     }
 
     fun getAll(): List<ConversationMessage>? {
         return repository.getAll().value
+    }
+
+    fun getConversationByIdRange(from:Long, to:Long): LiveData<List<ConversationMessage>> {
+        return repository.getConversationByIdRange(from,to)
+    }
+
+    fun getConversationList(): LiveData<List<ConversationsTable>> {
+        return repository.conversationList
+    }
+
+    fun deleteMany(messages: List<Int>) = viewModelScope.launch(Dispatchers.IO) {
+        repository.deleteMany(messages)
+    }
+
+    fun deleteAll() = viewModelScope.launch(Dispatchers.IO) {
+        repository.deleteAll()
     }
 
 

@@ -11,6 +11,7 @@ import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
 import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -28,7 +29,6 @@ import com.tetron.packetron.ui.ResponseAdapter
 import com.tetron.packetron.ui.message_templates.SavedMessageActivity
 import com.tetron.packetron.ui.udp_send_receive.LOG_TAG
 import kotlinx.android.synthetic.main.fragment_tcp_client.*
-import kotlinx.android.synthetic.main.fragment_tcp_client.view.*
 import java.net.Socket
 
 
@@ -41,6 +41,8 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment() {
     private lateinit var recyclerView: RecyclerView
     private lateinit var responseAdapter: RecyclerView.Adapter<*>
     private lateinit var viewManager: RecyclerView.LayoutManager
+
+    private lateinit var sendBTN: Button
 
     constructor() : this(ConnectionViewModel(Application()))
 
@@ -94,8 +96,8 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-        view.send_button.setOnClickListener {
+        sendBTN = view.findViewById(R.id.send_button) as Button
+        sendBTN.setOnClickListener {
             val msg = message_to_send.text.toString()
             if (msg.isNotEmpty() &&
                 tcpClientViewModel.tcpClientSocket != null &&
@@ -179,7 +181,7 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment() {
 
         tcpClientViewModel.tcpClientResponsesLive.observe(
             viewLifecycleOwner,
-            Observer<List<ConversationMessage>> {
+             {
                 recyclerView.scrollToPosition(tcpClientViewModel.tcpClientResponses.size - 1)
             })
 

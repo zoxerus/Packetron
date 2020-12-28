@@ -6,10 +6,11 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.tetron.packetron.db.conversations.ConversationDao
 import com.tetron.packetron.db.conversations.ConversationMessage
+import com.tetron.packetron.db.conversations.ConversationsTable
 import com.tetron.packetron.db.templates.MessageTemplate
 import com.tetron.packetron.db.templates.TemplateDao
 
-@Database(entities = [MessageTemplate::class, ConversationMessage::class], version = 2)
+@Database(entities = [MessageTemplate::class,ConversationsTable::class, ConversationMessage::class], version = 3)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun msgDao(): TemplateDao
     abstract fun conversationDao(): ConversationDao

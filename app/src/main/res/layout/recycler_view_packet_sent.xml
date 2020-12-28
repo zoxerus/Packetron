@@ -9,13 +9,12 @@
     android:layout_marginBottom="7dp"
     android:orientation="vertical"
     android:paddingVertical="2.5dp"
-
     >
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="#E5F7E8"
+        android:background="@color/accent1"
         android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -26,7 +25,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="end"
             android:paddingHorizontal="7dp"
-            android:textColor="@android:color/black"
+            android:textColor="@color/text1"
             android:textSize="12sp"
             tools:text="/127.0.0.1:33333" />
 
@@ -35,7 +34,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:paddingHorizontal="7dp"
-            android:textColor="@android:color/black"
+            android:textColor="@color/text1"
             android:textSize="18sp"
             tools:text="Hello this is a test message" />
 

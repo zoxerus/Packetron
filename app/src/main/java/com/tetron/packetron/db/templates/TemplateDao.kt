@@ -21,7 +21,7 @@ interface TemplateDao {
     @Delete
     fun delete(msg: MessageTemplate)
 
-    @Query("delete from message_templates where id in (:idList)")
+    @Query("DELETE FROM message_templates where id in (:idList)")
     fun deleteMany(idList: List<Long>)
 
     @Query("DELETE FROM message_templates")

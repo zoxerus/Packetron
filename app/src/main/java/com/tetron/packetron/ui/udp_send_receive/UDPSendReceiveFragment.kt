@@ -12,9 +12,7 @@ import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
-import android.widget.AutoCompleteTextView
-import android.widget.Toast
+import android.widget.*
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
@@ -26,13 +24,13 @@ import androidx.recyclerview.widget.RecyclerView
 import com.tetron.packetron.R
 import com.tetron.packetron.db.conversations.ConversationMessage
 import com.tetron.packetron.db.conversations.ConversationViewModel
+import com.tetron.packetron.db.conversations.ConversationsTable
 import com.tetron.packetron.ui.ConnectionDialog
 import com.tetron.packetron.ui.ConnectionViewModel
 import com.tetron.packetron.ui.MessageDialog
 import com.tetron.packetron.ui.ResponseAdapter
 import com.tetron.packetron.ui.message_templates.SavedMessageActivity
 import com.tetron.packetron.ui.saved_conversations.SavedConversationActivity
-import kotlinx.android.synthetic.main.fragment_udp_send_receive.*
 import java.io.IOException
 import java.net.*
 
@@ -57,6 +55,13 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
 
     private lateinit var addressAdapter: ArrayAdapter<String>
     private lateinit var remoteHost: AutoCompleteTextView
+
+    private lateinit var outPortNumET: EditText
+    private lateinit var outMessageET: EditText
+    private lateinit var sendBTN: Button
+    private lateinit var stopResendsBTN: Button
+    private lateinit var waitMsET: EditText
+    private lateinit var resendDelayMsET: EditText
 
     constructor() : this(ConnectionViewModel(Application()))
 
@@ -93,10 +98,10 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
 
         udpViewModel.udpLocalPort = ipPref!!.getString("local_port", "33333")!!
         if (preferences!!.getBoolean(getString(R.string.udp_send_from_server), true)) {
-            out_port_num.setText(udpViewModel.udpLocalPort)
-            out_port_num.isEnabled = false
+            outPortNumET.setText(udpViewModel.udpLocalPort)
+            outPortNumET.isEnabled = false
         }
-        message_to_send.setText(udpViewModel.udpMessageToSend)
+        outMessageET.setText(udpViewModel.udpMessageToSend)
     }
 
     override fun onCreateView(
@@ -115,6 +120,14 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
         super.onViewCreated(view, savedInstanceState)
 
         remoteHost = view.findViewById(R.id.remote_address_and_port)
+        outPortNumET =  view.findViewById(R.id.out_port_num) as EditText
+        outMessageET = view.findViewById(R.id.message_to_send) as EditText
+        sendBTN = view.findViewById(R.id.send_button) as Button
+        stopResendsBTN = view.findViewById(R.id.stop_resends) as Button
+        waitMsET = view.findViewById(R.id.response_wait_ms)
+        resendDelayMsET = view.findViewById(R.id.repeat_ms)
+
+
         if (ipPref!!.getStringSet("addresses", null) != null) {
             udpViewModel.udpRemoteAddresses.clear()
             udpViewModel.udpRemoteAddresses.addAll(
@@ -139,7 +152,7 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
 
             // specify the behaviour when user clicks the positive button of the reply dialogue
             MessageDialog("Enter a Reply", "Send") {
-                message_to_send.text = null
+                outMessageET.text = null
                 Thread {
                     sendUdpPacket(
                         fromServer = true,
@@ -156,7 +169,7 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
 
         udpViewModel.udpResponsesLive.observe(
             viewLifecycleOwner,
-            Observer<List<ConversationMessage>> {
+            {
                 recyclerView.scrollToPosition(udpViewModel.udpResponses.size - 1)
             })
 
@@ -170,8 +183,8 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
         }
 
 
-        send_button.setOnClickListener(this)
-        stop_resends.setOnClickListener(this)
+        sendBTN.setOnClickListener(this)
+        stopResendsBTN.setOnClickListener(this)
     }
 
 
@@ -194,11 +207,11 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
                     return
                 }
                 if (sharedPreferences!!.getBoolean(key, true)) {
-                    out_port_num.setText(udpViewModel.udpLocalPort)
-                    out_port_num.isEnabled = false
+                    outPortNumET.setText(udpViewModel.udpLocalPort)
+                    outPortNumET.isEnabled = false
                 } else {
-                    out_port_num.text = null
-                    out_port_num.isEnabled = true
+                    outPortNumET.text = null
+                    outPortNumET.isEnabled = true
                 }
             }
         }
@@ -229,13 +242,14 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
             R.id.mm_action_save_conversation -> {
                 // specify the behaviour when user clicks the positive button of the reply dialogue
                 MessageDialog("Enter a Name", "Save") {
-                    val messages = ArrayList<ConversationMessage>()
-                    for (msg in responseAdapter.getAll()) {
-                        msg.name = it
-                        Log.i(LOG_TAG, msg.print())
-                        messages.add(msg)
+                    if (udpViewModel.udpResponsesLive.value != null && udpViewModel.udpResponsesLive.value!!.isNotEmpty()){
+                        val msgs = ConversationsTable(name = it,
+                            fromTime = udpViewModel.udpResponsesLive.value!![0].timeId,
+                            toTime = udpViewModel.udpResponsesLive.value!![udpViewModel.udpResponsesLive.value!!.size - 1].timeId
+                        )
+                        conversationViewModel.insertMany(responseAdapter.getAll())
+                        conversationViewModel.insertConversation(msgs)
                     }
-                    conversationViewModel.insertMany(messages)
                 }
                     .showNow(requireActivity().supportFragmentManager, "Conversation Name")
             }
@@ -251,7 +265,7 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
 
     override fun onPause() {
         super.onPause()
-        udpViewModel.udpMessageToSend = message_to_send.text.toString()
+        udpViewModel.udpMessageToSend = outMessageET.text.toString()
         with(ipPref!!.edit()) {
             putString("local_port", udpViewModel.udpLocalPort)
             putStringSet("addresses", udpViewModel.udpRemoteAddresses.toSet())
@@ -452,7 +466,7 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
     override fun onClick(v: View?) {
         when (v!!.id) {
             R.id.send_button -> {
-                val message = message_to_send.text.toString()
+                val message = outMessageET.text.toString()
                 if (message.isNotEmpty()) {
                     val address = remoteHost.text.toString()
                     val remoteIp = address
@@ -461,19 +475,19 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
                     val remotePort = address
                         .split(":", ignoreCase = true, limit = 0)
                         .last()
-                    message_to_send.text = null
-                    val resendDelay = repeat_ms.text.toString()
-                    val outPort = out_port_num.text.toString()
-                    val responseWait = response_wait_ms.text.toString()
+                    outMessageET.text = null
+                    val resendDelay = resendDelayMsET.text.toString()
+                    val outPort = outPortNumET.text.toString()
+                    val responseWait = waitMsET.text.toString()
                     val fromServer =
                         preferences!!.getBoolean(getString(R.string.udp_send_from_server), true)
                     if (resendDelay != "" && resendDelay != "0") {
                         if (responseWait != "" && responseWait != "0") {
-                            response_wait_ms.text = null
+                            waitMsET.text = null
                         }
-                        repeat_ms.text = null
+                        resendDelayMsET.text = null
                         stopResends = false
-                        stop_resends.visibility = View.VISIBLE
+                        stopResendsBTN.visibility = View.VISIBLE
                         Thread {
                             var lastCall: Long = 0
                             while (!stopResends) {
@@ -501,7 +515,7 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
                                 ip = remoteIp,
                                 port = remotePort,
                                 outPort = outPort,
-                                responseWait = response_wait_ms.text.toString()
+                                responseWait = waitMsET.text.toString()
                             )
                         }.start()
                     }
