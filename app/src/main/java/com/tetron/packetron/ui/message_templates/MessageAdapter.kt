@@ -4,11 +4,12 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.CheckBox
+import android.widget.TextView
 import androidx.appcompat.widget.PopupMenu
 import androidx.recyclerview.widget.RecyclerView
 import com.tetron.packetron.R
 import com.tetron.packetron.db.templates.MessageTemplate
-import kotlinx.android.synthetic.main.message_template_recycleview_item.view.*
 
 
 class MessageAdapter internal constructor(
@@ -32,13 +33,15 @@ class MessageAdapter internal constructor(
     }
 
     override fun onBindViewHolder(holder: MessageViewHolder, position: Int) {
+        val msgTxtView = holder.msgItemView.findViewById<TextView>(R.id.tv_message_templates_message)
+        val msgCheckBox = holder.msgItemView.findViewById<CheckBox>(R.id.cb_message_templates_checkbox)
         val current = messages[position]
-        holder.msgItemView.tv_message_templates_message.text = current.message
-        holder.msgItemView.cb_message_templates_checkbox.isChecked = false
-        holder.msgItemView.tv_message_templates_message.setOnClickListener {
+        msgTxtView.text = current.message
+        msgCheckBox.isChecked = false
+        holder.msgItemView.findViewById<TextView>(R.id.tv_message_templates_message).setOnClickListener {
             itemClickListener(current)
         }
-        holder.msgItemView.tv_message_templates_message.setOnLongClickListener { view ->
+        msgTxtView.setOnLongClickListener { view ->
             val pop = PopupMenu(context, view)
             pop.inflate(R.menu.message_template_context)
             pop.setOnMenuItemClickListener { item ->
@@ -59,7 +62,7 @@ class MessageAdapter internal constructor(
             pop.show()
             true
         }
-        holder.msgItemView.cb_message_templates_checkbox.setOnCheckedChangeListener { _, isChecked ->
+        msgCheckBox.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 checkedMessages.add(current.id)
             } else {

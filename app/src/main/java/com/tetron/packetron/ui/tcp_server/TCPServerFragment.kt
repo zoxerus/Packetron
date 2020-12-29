@@ -11,13 +11,12 @@ import android.view.LayoutInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ArrayAdapter
-import android.widget.Button
-import android.widget.Toast
+import android.widget.*
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
+import androidx.navigation.fragment.findNavController
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -29,7 +28,6 @@ import com.tetron.packetron.ui.MessageDialog
 import com.tetron.packetron.ui.ResponseAdapter
 import com.tetron.packetron.ui.message_templates.SavedMessageActivity
 import com.tetron.packetron.ui.udp_send_receive.LOG_TAG
-import kotlinx.android.synthetic.main.fragment_tcp_server.*
 import java.net.ServerSocket
 import java.net.Socket
 
@@ -47,6 +45,8 @@ class TCPServerFragment(vm: ConnectionViewModel) : Fragment() {
     private lateinit var tcpClientAdapter: ArrayAdapter<Socket>
 
     private lateinit var sendBTN: Button
+    private lateinit var outMessageET: EditText
+    private lateinit var addressSpinner: Spinner
 
     constructor() : this(ConnectionViewModel(Application()))
 
@@ -76,7 +76,7 @@ class TCPServerFragment(vm: ConnectionViewModel) : Fragment() {
         super.onResume()
         requireActivity().title = "TCP Server"
         tcpViewModel.localTcpPort = ipPref!!.getString("local_port", "33333")!!
-        message_to_send.setText(tcpViewModel.tcpServerMessageToSend)
+        outMessageET.setText(tcpViewModel.tcpServerMessageToSend)
     }
 
     override fun onCreateView(
@@ -88,15 +88,17 @@ class TCPServerFragment(vm: ConnectionViewModel) : Fragment() {
     }
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        addressSpinner = view.findViewById(R.id.tcp_address_spinner)
+        outMessageET = view.findViewById(R.id.message_to_send)
         sendBTN = view.findViewById(R.id.send_button)
         sendBTN.setOnClickListener {
-            val pos = tcp_address_spinner.selectedItemPosition
+            val pos = addressSpinner.selectedItemPosition
             Log.e("pos ", pos.toString())
             if (pos == -1) {
                 Toast.makeText(requireContext(), "Select Client First", Toast.LENGTH_LONG).show()
             } else {
                 val soc = tcpClientAdapter.getItem(pos)
-                val msg = message_to_send.text.toString()
+                val msg = outMessageET.text.toString()
                 if (msg.isNotEmpty() && soc != null && soc.isConnected) {
                     Thread {
 
@@ -113,8 +115,7 @@ class TCPServerFragment(vm: ConnectionViewModel) : Fragment() {
                                     localIp = soc.localAddress.toString().removePrefix("/"),
                                     localPort = soc.localPort.toString(),
                                     remoteIp = soc.remoteSocketAddress.toString().removePrefix("/"),
-                                    remotePort = soc.port.toString(),
-                                    name = ""
+                                    remotePort = soc.port.toString()
                                 )
                                 pm.socket = soc
                                 tcpViewModel.addTcpServerResponse(pm)
@@ -124,7 +125,7 @@ class TCPServerFragment(vm: ConnectionViewModel) : Fragment() {
                             e.printStackTrace()
                         }
                     }.start()
-                    message_to_send.text = null
+                    outMessageET.text = null
                 }
             }
         }
@@ -134,7 +135,7 @@ class TCPServerFragment(vm: ConnectionViewModel) : Fragment() {
             android.R.layout.simple_dropdown_item_1line,
             tcpClients
         )
-        tcp_address_spinner.adapter = tcpClientAdapter
+        addressSpinner.adapter = tcpClientAdapter
 
 
         viewManager = LinearLayoutManager(requireContext().applicationContext)
@@ -158,8 +159,7 @@ class TCPServerFragment(vm: ConnectionViewModel) : Fragment() {
                                     localPort = pm.socket!!.localPort.toString(),
                                     localIp = pm.socket!!.localAddress.toString(),
                                     remotePort = pm.socket!!.port.toString(),
-                                    remoteIp = pm.socket!!.remoteSocketAddress.toString(),
-                                    name = ""
+                                    remoteIp = pm.socket!!.remoteSocketAddress.toString()
                                 )
                                 newPm.socket = pm.socket
                                 tcpViewModel.addTcpServerResponse(newPm)

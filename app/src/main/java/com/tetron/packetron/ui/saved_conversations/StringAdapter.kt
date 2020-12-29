@@ -4,11 +4,11 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.widget.PopupMenu
+import android.widget.CheckBox
+import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.tetron.packetron.R
 import com.tetron.packetron.db.conversations.ConversationsTable
-import kotlinx.android.synthetic.main.message_template_recycleview_item.view.*
 
 
 class StringAdapter internal constructor(
@@ -31,14 +31,16 @@ class StringAdapter internal constructor(
     }
 
     override fun onBindViewHolder(holder: MessageViewHolder, position: Int) {
+        val msgTxtView = holder.msgItemView.findViewById<TextView>(R.id.tv_message_templates_message)
+        val msgCheckBox = holder.msgItemView.findViewById<CheckBox>(R.id.cb_message_templates_checkbox)
         val current = conversations[position]
-        holder.msgItemView.tv_message_templates_message.text = current.name
-        holder.msgItemView.cb_message_templates_checkbox.isChecked = false
-        holder.msgItemView.tv_message_templates_message.setOnClickListener {
+        msgTxtView.text = current.name
+        msgCheckBox.isChecked = false
+        msgTxtView.setOnClickListener {
             itemClickListener(current)
         }
 
-        holder.msgItemView.cb_message_templates_checkbox.setOnCheckedChangeListener { _, isChecked ->
+        msgCheckBox.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked) {
                 checkedMessages.add(current.id)
             } else {

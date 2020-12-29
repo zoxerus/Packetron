@@ -25,7 +25,6 @@ import com.tetron.packetron.ui.about.AboutFragment
 import com.tetron.packetron.ui.tcp_client.TCPClientFragment
 import com.tetron.packetron.ui.tcp_server.TCPServerFragment
 import com.tetron.packetron.ui.udp_send_receive.UDPSendReceiveFragment
-import kotlinx.android.synthetic.main.content_main.*
 import java.net.InetAddress
 import java.net.UnknownHostException
 import kotlin.system.exitProcess
@@ -55,7 +54,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
     // Determine the screen width (less decorations) to use for the ad width.
     // If the ad hasn't been laid out, default to the full screen width.
-    private val adSize: AdSize
+/*    private val adSize: AdSize
         get() {
             val display = windowManager.defaultDisplay
             val outMetrics = DisplayMetrics()
@@ -70,7 +69,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
             val adWidth = (adWidthPixels / density).toInt()
             return AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this, adWidth)
-        }
+        }*/
 
 
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -8,7 +8,6 @@ import android.widget.ToggleButton
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.DialogFragment
 import com.tetron.packetron.R
-import kotlinx.android.synthetic.main.dialog_connection.view.*
 
 class ConnectionDialog(
     private val title: String,
@@ -20,18 +19,21 @@ class ConnectionDialog(
 
     private val connectionViewModel = vm
     private val setButton = button
-    private var dialogView: View? = null
+
+    private lateinit var localPortET: EditText
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         return activity?.let {
-            dialogView = View.inflate(activity, R.layout.dialog_connection, null)
+           val dialogView = View.inflate(activity, R.layout.dialog_connection, null)
+
+            localPortET = dialogView.findViewById(R.id.local_port)
 
             val builder = AlertDialog.Builder(it)
             builder.setTitle(title)
             builder.setNegativeButton("OK") { _, _ ->
             }
             builder.setView(dialogView)
-            dialogView!!.local_port.setText(address)
+            localPortET.setText(address)
 
             val connectToggle: ToggleButton = dialogView!!.findViewById(R.id.button_connect)
             connectToggle.text = getString(R.string.text_connect)
@@ -43,9 +45,9 @@ class ConnectionDialog(
             connectToggle.setOnCheckedChangeListener { _, _ ->
                 connect(
                     connectionViewModel,
-                    dialogView!!.local_port.text.toString(),
+                    localPortET.text.toString(),
                     connectToggle,
-                    dialogView!!.local_port
+                    localPortET
                 )
             }
 

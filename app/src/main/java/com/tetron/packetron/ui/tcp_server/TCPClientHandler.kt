@@ -26,8 +26,7 @@ class TCPClientHandler(
                     localIp = clientSocket.localAddress.toString(),
                     localPort = clientSocket.localPort.toString(),
                     remoteIp = clientSocket.remoteSocketAddress.toString(),
-                    remotePort = clientSocket.port.toString(),
-                    name = ""
+                    remotePort = clientSocket.port.toString()
                 )
                 pm.socket = clientSocket
                 vm.addTcpServerResponse(pm)

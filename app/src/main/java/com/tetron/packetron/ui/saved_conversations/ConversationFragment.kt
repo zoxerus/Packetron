@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.tetron.packetron.R
+import com.tetron.packetron.db.conversations.ConversationMessage
 import com.tetron.packetron.db.conversations.ConversationViewModel
 import com.tetron.packetron.db.conversations.ConversationsTable
 import com.tetron.packetron.ui.ResponseAdapter

@@ -1,13 +1,16 @@
 package com.tetron.packetron.ui
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
+import com.tetron.packetron.ConnectionUtils
 import com.tetron.packetron.R
 import com.tetron.packetron.db.conversations.ConversationMessage
-import kotlinx.android.synthetic.main.recycler_view_packet_received.view.*
 
 class ResponseAdapter(
     private var mDataSet: List<ConversationMessage>,
@@ -19,14 +22,13 @@ class ResponseAdapter(
     class SentViewHolder(val outMsg: ConstraintLayout) : RecyclerView.ViewHolder(outMsg)
 
 
+    private val utils = ConnectionUtils()
+    private var useHex = false
+
     override fun getItemCount() = mDataSet.size
+
     fun getAll(): List<ConversationMessage> {
         return mDataSet
-    }
-
-    fun addAll(conversations: List<ConversationMessage>) {
-        mDataSet = conversations
-        notifyDataSetChanged()
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
@@ -35,16 +37,24 @@ class ResponseAdapter(
         when (holder.itemViewType) {
             1 -> {
                 val receivedViewHolder = holder as ReceivedViewHolder
-                receivedViewHolder.inMsg.address_view.text = item.addressToString()
-                receivedViewHolder.inMsg.text_view.text = item.message
+                receivedViewHolder.inMsg.findViewById<TextView>(R.id.address_view).text = item.addressToString()
+                if (useHex){
+                    receivedViewHolder.inMsg.findViewById<TextView>(R.id.text_view).text = utils.charToHex( item.message.toCharArray() )
+                } else{
+                    receivedViewHolder.inMsg.findViewById<TextView>(R.id.text_view).text = item.message
+                }
                 receivedViewHolder.inMsg.setOnClickListener {
                     messageClickListener(item)
                 }
             }
             0 -> {
                 val sentViewHolder = holder as SentViewHolder
-                sentViewHolder.outMsg.address_view.text = item.addressToString()
-                sentViewHolder.outMsg.text_view.text = item.message
+                sentViewHolder.outMsg.findViewById<TextView>(R.id.address_view).text = item.addressToString()
+                if (useHex){
+                    sentViewHolder.outMsg.findViewById<TextView>(R.id.text_view).text = utils.charToHex( item.message.toCharArray() )
+                } else{
+                    sentViewHolder.outMsg.findViewById<TextView>(R.id.text_view).text = item.message
+                }
                 sentViewHolder.outMsg.setOnClickListener {
                     messageClickListener(item)
                 }
@@ -78,6 +88,11 @@ class ResponseAdapter(
 
     fun setResponses(r:List<ConversationMessage>){
         mDataSet = r
+        notifyDataSetChanged()
+    }
+
+    fun useHex(b: Boolean ){
+        useHex = b
         notifyDataSetChanged()
     }
 }

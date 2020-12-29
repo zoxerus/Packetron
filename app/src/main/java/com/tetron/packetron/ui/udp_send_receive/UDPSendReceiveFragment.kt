@@ -5,7 +5,6 @@ import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
-import android.net.wifi.WifiManager
 import android.os.Bundle
 import android.util.Log
 import android.view.LayoutInflater
@@ -15,12 +14,13 @@ import android.view.ViewGroup
 import android.widget.*
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.tetron.packetron.ConnectionUtils
 import com.tetron.packetron.R
 import com.tetron.packetron.db.conversations.ConversationMessage
 import com.tetron.packetron.db.conversations.ConversationViewModel
@@ -37,31 +37,37 @@ import java.net.*
 const val LOG_TAG: String = "UDP_SEND_RECEIVE"
 
 class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
-    SharedPreferences.OnSharedPreferenceChangeListener, View.OnClickListener {
+    SharedPreferences.OnSharedPreferenceChangeListener, View.OnClickListener, View.OnFocusChangeListener {
 
-    private val udpViewModel = vm
-    private lateinit var conversationViewModel: ConversationViewModel
-
+    /*/* Global Variables */*/
     private var stopResends = false
 
+    /*/* Shared Preferences */*/
     private var ipPref: SharedPreferences? = null
-
     private var preferences: SharedPreferences? = null
 
-    private lateinit var recyclerView: RecyclerView
+    /*/* Adapters and Managers */*/
+    private val utils = ConnectionUtils()
+    private val udpViewModel = vm
+    private lateinit var conversationViewModel: ConversationViewModel
     private lateinit var responseAdapter: ResponseAdapter
     private lateinit var viewManager: RecyclerView.LayoutManager
-
-
     private lateinit var addressAdapter: ArrayAdapter<String>
-    private lateinit var remoteHost: AutoCompleteTextView
 
+    /*/* Views Definition */*/
     private lateinit var outPortNumET: EditText
     private lateinit var outMessageET: EditText
     private lateinit var sendBTN: Button
     private lateinit var stopResendsBTN: Button
     private lateinit var waitMsET: EditText
     private lateinit var resendDelayMsET: EditText
+    private lateinit var remoteHost: AutoCompleteTextView
+    private lateinit var recyclerView: RecyclerView
+    private lateinit var hexInputET: EditText
+    private lateinit var showAdvancedControlsCB: CheckBox
+    private lateinit var showHexCB: CheckBox
+    private lateinit var advancedControlsLayout: ConstraintLayout
+
 
     constructor() : this(ConnectionViewModel(Application()))
 
@@ -118,15 +124,40 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
+        /*/* Assign the Views */*/
         remoteHost = view.findViewById(R.id.remote_address_and_port)
-        outPortNumET =  view.findViewById(R.id.out_port_num) as EditText
-        outMessageET = view.findViewById(R.id.message_to_send) as EditText
-        sendBTN = view.findViewById(R.id.send_button) as Button
-        stopResendsBTN = view.findViewById(R.id.stop_resends) as Button
+        outPortNumET =  view.findViewById(R.id.out_port_num)
+        outMessageET = view.findViewById(R.id.message_to_send)
+        sendBTN = view.findViewById(R.id.send_button)
+        stopResendsBTN = view.findViewById(R.id.stop_resends)
         waitMsET = view.findViewById(R.id.response_wait_ms)
         resendDelayMsET = view.findViewById(R.id.repeat_ms)
+        hexInputET = view.findViewById(R.id.hex_input)
+        showAdvancedControlsCB = view.findViewById(R.id.cb_show_advanced_controls)
+        advancedControlsLayout = view.findViewById(R.id.advanced_controls_layout)
+        showHexCB = view.findViewById(R.id.cb_show_hex)
 
+        /*/* set listeners for the checkboxes */*/
+        showAdvancedControlsCB.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                advancedControlsLayout.visibility = View.VISIBLE
+            } else {
+                advancedControlsLayout.visibility = View.GONE
+            }
+        }
+        showHexCB.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked){
+                responseAdapter.useHex(true)
+                responseAdapter.setResponses( udpViewModel.udpResponses )
+
+            } else {
+                responseAdapter.useHex(false)
+                responseAdapter.setResponses( udpViewModel.udpResponses )
+            }
+        }
+
+        hexInputET.onFocusChangeListener = this
+        outMessageET.onFocusChangeListener = this
 
         if (ipPref!!.getStringSet("addresses", null) != null) {
             udpViewModel.udpRemoteAddresses.clear()
@@ -137,18 +168,17 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
                 )!!.toMutableList()
             )
         }
+
         // the spinner for selecting a pre-used address
         addressAdapter = ArrayAdapter(
             requireContext().applicationContext,
             R.layout.spinner_dropdown, udpViewModel.udpRemoteAddresses
         )
-
         remoteHost.setAdapter(addressAdapter)
-
 
         viewManager = LinearLayoutManager(requireContext().applicationContext)
         // specify the behaviour when the user clicks a message from the message list
-        responseAdapter = ResponseAdapter(udpViewModel.udpResponses) { item ->
+        responseAdapter = ResponseAdapter( udpViewModel.udpResponses ) { item ->
 
             // specify the behaviour when user clicks the positive button of the reply dialogue
             MessageDialog("Enter a Reply", "Send") {
@@ -173,8 +203,6 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
                 recyclerView.scrollToPosition(udpViewModel.udpResponses.size - 1)
             })
 
-        Log.i(LOG_TAG, "View Created")
-
         recyclerView = view.findViewById<RecyclerView>(R.id.response_recycler_view).apply {
             setHasFixedSize(true)
             layoutManager = viewManager
@@ -182,7 +210,7 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
 
         }
 
-
+        /*/* Set onClick Listeners */*/
         sendBTN.setOnClickListener(this)
         stopResendsBTN.setOnClickListener(this)
     }
@@ -216,8 +244,6 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
             }
         }
     }
-
-
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
@@ -274,6 +300,104 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
 
     }
 
+    /*/* Handle Click Events */*/
+    override fun onClick(v: View?) {
+        when (v!!.id) {
+            R.id.send_button -> {
+                val message = outMessageET.text.toString()
+                if (message.isNotEmpty()) {
+                    val address = remoteHost.text.toString()
+                    val remoteIp = address
+                        .split(":", ignoreCase = true, limit = 0)
+                        .first()
+                    val remotePort = address
+                        .split(":", ignoreCase = true, limit = 0)
+                        .last()
+                    outMessageET.text = null
+                    val resendDelay = resendDelayMsET.text.toString()
+                    val outPort = outPortNumET.text.toString()
+                    val responseWait = waitMsET.text.toString()
+                    val fromServer =
+                        preferences!!.getBoolean(getString(R.string.udp_send_from_server), true)
+                    if (resendDelay != "" && resendDelay != "0") {
+                        if (responseWait != "" && responseWait != "0") {
+                            waitMsET.text = null
+                        }
+                        resendDelayMsET.text = null
+                        stopResends = false
+                        stopResendsBTN.visibility = View.VISIBLE
+                        Thread {
+                            var lastCall: Long = 0
+                            while (!stopResends) {
+                                if (System.currentTimeMillis() - lastCall >= resendDelay.toLong()) {
+                                    lastCall = System.currentTimeMillis()
+                                    if (sendUdpPacket(
+                                            fromServer,
+                                            message,
+                                            remoteIp,
+                                            remotePort,
+                                            outPort,
+                                            responseWait
+                                        ) != 0
+                                    ) {
+                                        break
+                                    }
+                                }
+                            }
+                        }.start()
+                    } else {
+                        Thread {
+                            sendUdpPacket(
+                                fromServer = fromServer,
+                                message = message,
+                                ip = remoteIp,
+                                port = remotePort,
+                                outPort = outPort,
+                                responseWait = waitMsET.text.toString()
+                            )
+                        }.start()
+                    }
+                }
+            }
+            R.id.stop_resends -> {
+                stopResends = true
+            }
+        }
+    }
+
+    override fun onFocusChange(v: View?, hasFocus: Boolean) {
+        if (v == null) return
+        when (v.id) {
+            R.id.hex_input -> {
+                if (!hasFocus) return
+                if (outMessageET.text.toString() != "") {
+                    val bytes = outMessageET.text.toString().toCharArray()
+                    val hex = utils.charToHex(bytes)
+                    hexInputET.setText(hex)
+                }
+
+            }
+            R.id.message_to_send -> {
+                if (!hasFocus) return
+                if (hexInputET.text != null) {
+                    var hex = hexInputET.text.toString().replace("\\s".toRegex(), "")
+                    val output = StringBuilder()
+                    var i = 0
+                    if (hex.length % 2 !=0) { hex = "0$hex"
+                    }
+                    while (i < hex.length) {
+                        val str: String = hex.substring(i, i + 2)
+                        output.append(str.toInt(16).toChar())
+                        i += 2
+                    }
+                    outMessageET.setText(output)
+                }
+
+            }
+        }
+    }
+
+    /*/* show the connection Dialog   */*/
     private fun createConnectionDialog(): ConnectionDialog {
         return ConnectionDialog(
             "Enter Local Port Number",
@@ -294,7 +418,7 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
                             try {
                                 vm.udpSocket = DatagramSocket(
                                     port.toInt(),
-                                    getInetAddress(requireContext().applicationContext)
+                                    utils.getInetAddress(requireContext().applicationContext)
                                 )
                                 vm.udpSocket?.soTimeout = 0
                             } catch (e: Exception) {
@@ -319,7 +443,7 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
             })
     }
 
-
+    /*/* Listen for upd Packets */*/
     private fun udpListen(soc: DatagramSocket?) {
         val msg = ByteArray(
             preferences!!
@@ -336,13 +460,12 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
                 remoteIp = packet.address.toString().removePrefix("/"),
                 remotePort = packet.port.toString(),
                 localIp = soc!!.localAddress.toString().removePrefix("/"),
-                localPort = soc.localPort.toString(),
-                name = ""
+                localPort = soc.localPort.toString()
             )
         udpViewModel.addUdpResponse(res)
     }
 
-
+    /*/* Transmits UDP Packets */*/
     private fun sendUdpPacket(
         fromServer: Boolean, message: String, ip: String,
         port: String, outPort: String, responseWait: String
@@ -360,8 +483,7 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
                         message = String(msg), remoteIp = ip, remotePort = port,
                         localPort = udpViewModel.udpSocket!!.localPort.toString(),
                         localIp = udpViewModel.udpSocket!!.localAddress.toString()
-                            .removePrefix("/"),
-                        name = ""
+                            .removePrefix("/")
                     )
 
                     udpViewModel.udpSocket!!.send(packet)
@@ -381,11 +503,11 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
 
             } else {
                 val socket: DatagramSocket = if (outPort == "" || outPort == "0") {
-                    DatagramSocket(0, getInetAddress(requireContext().applicationContext))
+                    DatagramSocket(0, utils.getInetAddress(requireContext().applicationContext))
                 } else {
                     DatagramSocket(
                         outPort.toInt(),
-                        getInetAddress(requireContext().applicationContext)
+                        utils.getInetAddress(requireContext().applicationContext)
                     )
                 }
                 if (preferences!!.getBoolean("udp_show_sent", false)) {
@@ -394,8 +516,7 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
                         direction = 0,
                         message = String(msg), remoteIp = ip, remotePort = port,
                         localPort = socket.localPort.toString(),
-                        localIp = socket.localAddress.toString().removePrefix("/"),
-                        name = ""
+                        localIp = socket.localAddress.toString().removePrefix("/")
                     )
                     udpViewModel.addUdpResponse(protocolMessage)
                 }
@@ -462,91 +583,8 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
         }
         return 1
     }
-
-    override fun onClick(v: View?) {
-        when (v!!.id) {
-            R.id.send_button -> {
-                val message = outMessageET.text.toString()
-                if (message.isNotEmpty()) {
-                    val address = remoteHost.text.toString()
-                    val remoteIp = address
-                        .split(":", ignoreCase = true, limit = 0)
-                        .first()
-                    val remotePort = address
-                        .split(":", ignoreCase = true, limit = 0)
-                        .last()
-                    outMessageET.text = null
-                    val resendDelay = resendDelayMsET.text.toString()
-                    val outPort = outPortNumET.text.toString()
-                    val responseWait = waitMsET.text.toString()
-                    val fromServer =
-                        preferences!!.getBoolean(getString(R.string.udp_send_from_server), true)
-                    if (resendDelay != "" && resendDelay != "0") {
-                        if (responseWait != "" && responseWait != "0") {
-                            waitMsET.text = null
-                        }
-                        resendDelayMsET.text = null
-                        stopResends = false
-                        stopResendsBTN.visibility = View.VISIBLE
-                        Thread {
-                            var lastCall: Long = 0
-                            while (!stopResends) {
-                                if (System.currentTimeMillis() - lastCall >= resendDelay.toLong()) {
-                                    lastCall = System.currentTimeMillis()
-                                    if (sendUdpPacket(
-                                            fromServer,
-                                            message,
-                                            remoteIp,
-                                            remotePort,
-                                            outPort,
-                                            responseWait
-                                        ) != 0
-                                    ) {
-                                        break
-                                    }
-                                }
-                            }
-                        }.start()
-                    } else {
-                        Thread {
-                            sendUdpPacket(
-                                fromServer = fromServer,
-                                message = message,
-                                ip = remoteIp,
-                                port = remotePort,
-                                outPort = outPort,
-                                responseWait = waitMsET.text.toString()
-                            )
-                        }.start()
-                    }
-                }
-            }
-            R.id.stop_resends -> {
-                stopResends = true
-            }
-        }
-    }
-
-
-    private fun getInetAddress(context: Context): InetAddress {
-        val wifiManager = context.applicationContext
-            .getSystemService(Context.WIFI_SERVICE) as WifiManager
-        return intToInetAddress(wifiManager.dhcpInfo.ipAddress)
-    }
-
-    private fun intToInetAddress(hostAddress: Int): InetAddress {
-        val addressBytes = byteArrayOf(
-            (0xff and hostAddress).toByte(),
-            (0xff and (hostAddress shr 8)).toByte(),
-            (0xff and (hostAddress shr 16)).toByte(),
-            (0xff and (hostAddress shr 24)).toByte()
-        )
-        return try {
-            InetAddress.getByAddress(addressBytes)
-        } catch (e: UnknownHostException) {
-            throw AssertionError()
-        }
-    }
-
-
 }
+
+
+
+

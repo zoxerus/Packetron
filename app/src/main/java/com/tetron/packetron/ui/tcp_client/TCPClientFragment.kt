@@ -12,6 +12,7 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -28,7 +29,6 @@ import com.tetron.packetron.ui.MessageDialog
 import com.tetron.packetron.ui.ResponseAdapter
 import com.tetron.packetron.ui.message_templates.SavedMessageActivity
 import com.tetron.packetron.ui.udp_send_receive.LOG_TAG
-import kotlinx.android.synthetic.main.fragment_tcp_client.*
 import java.net.Socket
 
 
@@ -43,6 +43,7 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment() {
     private lateinit var viewManager: RecyclerView.LayoutManager
 
     private lateinit var sendBTN: Button
+    private lateinit var outMessageET: EditText
 
     constructor() : this(ConnectionViewModel(Application()))
 
@@ -75,7 +76,7 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment() {
         requireActivity().title = "TCP Client"
         tcpClientViewModel.tcpClientAddress =
             ipPref!!.getString("client_address", "127.0.0.1:33333")!!
-        message_to_send.setText(tcpClientViewModel.tcpClientMessageToSend)
+        outMessageET.setText(tcpClientViewModel.tcpClientMessageToSend)
     }
 
     override fun onPause() {
@@ -96,9 +97,10 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        outMessageET = view.findViewById(R.id.message_to_send)
         sendBTN = view.findViewById(R.id.send_button) as Button
         sendBTN.setOnClickListener {
-            val msg = message_to_send.text.toString()
+            val msg = outMessageET.text.toString()
             if (msg.isNotEmpty() &&
                 tcpClientViewModel.tcpClientSocket != null &&
                 tcpClientViewModel.tcpClientSocket!!.isConnected
@@ -120,8 +122,7 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment() {
                                     .removePrefix("/"),
                                 remotePort = tcpClientViewModel.tcpClientSocket!!.port.toString(),
                                 remoteIp = tcpClientViewModel.tcpClientSocket!!.remoteSocketAddress.toString()
-                                    .removePrefix("/"),
-                                name = ""
+                                    .removePrefix("/")
                             )
                             pm.socket = tcpClientViewModel.tcpClientSocket
                             tcpClientViewModel.addTcpClientResponse(pm)
@@ -130,7 +131,7 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment() {
                         e.printStackTrace()
                     }
                 }.start()
-                message_to_send.text = null
+                outMessageET.text = null
             }
         }
 
@@ -156,8 +157,7 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment() {
                                     localPort = pm.socket!!.localPort.toString(),
                                     remoteIp = pm.socket!!.remoteSocketAddress.toString()
                                         .removePrefix("/"),
-                                    remotePort = pm.socket!!.port.toString(),
-                                    name = ""
+                                    remotePort = pm.socket!!.port.toString()
                                 )
                                 newPm.socket = pm.socket
                                 tcpClientViewModel.addTcpClientResponse(newPm)
@@ -259,8 +259,7 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment() {
                                                     .removePrefix("/"),
                                                 remotePort = vm.tcpClientSocket!!.port.toString(),
                                                 remoteIp = vm.tcpClientSocket!!.remoteSocketAddress.toString()
-                                                    .removePrefix("/"),
-                                                name = ""
+                                                    .removePrefix("/")
                                             )
                                             cm.socket = vm.tcpClientSocket
                                             vm.addTcpClientResponse(cm)
