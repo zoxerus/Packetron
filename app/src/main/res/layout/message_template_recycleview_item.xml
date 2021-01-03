@@ -27,7 +27,7 @@
         android:id="@+id/cb_message_templates_checkbox"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="@android:color/white"
+        android:buttonTint="@color/text1"
         app:layout_constraintBottom_toBottomOf="@id/tv_message_templates_message"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_weight="1"

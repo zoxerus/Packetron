@@ -28,6 +28,7 @@ interface ConversationDao {
     @Query("DELETE FROM conversation_list where id in (:idList)")
     fun deleteMany(idList: List<Int>)
 
+
     @Query("DELETE FROM conversation_list")
     fun deleteAll()
 

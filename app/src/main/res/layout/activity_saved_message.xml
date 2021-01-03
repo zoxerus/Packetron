@@ -14,14 +14,16 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:inputType="text"
+        android:padding="3dp"
         android:hint="@string/enter_a_message"
         android:minLines="3"
+        android:lines="3"
         android:textSize="14sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/bt_add_message_template"
         app:layout_constraintHorizontal_weight="5"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@id/bt_add_message_template" />
+        app:layout_constraintTop_toBottomOf="@id/message_templates_rv"/>
 
     <Button
         android:id="@+id/bt_add_message_template"
@@ -33,7 +35,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_weight="1.5"
         app:layout_constraintStart_toEndOf="@id/et_add_message_template"
-        app:layout_constraintTop_toBottomOf="@id/message_templates_rv" />
+        app:layout_constraintTop_toTopOf="@id/et_add_message_template"/>
 
     <Button
         android:id="@+id/bt_cancel_message_template"
@@ -41,7 +43,7 @@
         android:layout_height="wrap_content"
         android:text="@string/cancel"
         android:textSize="12sp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toBottomOf="@id/et_add_message_template"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_weight="1.5"
         app:layout_constraintStart_toEndOf="@id/et_add_message_template"

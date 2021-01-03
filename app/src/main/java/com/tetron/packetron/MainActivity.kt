@@ -2,11 +2,10 @@ package com.tetron.packetron
 
 import android.app.AlertDialog
 import android.app.Dialog
-import android.content.Context
 import android.content.Intent
-import android.net.wifi.WifiManager
 import android.os.Bundle
-import android.util.DisplayMetrics
+import android.os.StrictMode
+import android.os.StrictMode.VmPolicy
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.Toast
@@ -17,16 +16,12 @@ import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.DialogFragment
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import com.google.android.gms.ads.AdSize
-import com.google.android.gms.ads.AdView
 import com.google.android.material.navigation.NavigationView
 import com.tetron.packetron.ui.ConnectionViewModel
 import com.tetron.packetron.ui.about.AboutFragment
 import com.tetron.packetron.ui.tcp_client.TCPClientFragment
 import com.tetron.packetron.ui.tcp_server.TCPServerFragment
 import com.tetron.packetron.ui.udp_send_receive.UDPSendReceiveFragment
-import java.net.InetAddress
-import java.net.UnknownHostException
 import kotlin.system.exitProcess
 
 
@@ -39,7 +34,7 @@ const val ABOUT_FRAGMENT_TAG = "About"
 
 class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
-    private lateinit var adView: AdView
+    //private lateinit var adView: AdView
 
     private var udpSendReceiveFragment: UDPSendReceiveFragment? = null
     private var tcpServerFragment: TCPServerFragment? = null
@@ -50,6 +45,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
     private lateinit var drawerLayout: DrawerLayout
 
     private lateinit var connectionViewModel: ConnectionViewModel
+    private val utils = ConnectionUtils()
 
 
     // Determine the screen width (less decorations) to use for the ad width.
@@ -69,10 +65,31 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
 
             val adWidth = (adWidthPixels / density).toInt()
             return AdSize.getCurrentOrientationAnchoredAdaptiveBannerAdSize(this, adWidth)
-        }*/
+        }
+        */
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        if (BuildConfig.DEBUG) {
+            StrictMode.setThreadPolicy(
+                StrictMode.ThreadPolicy.Builder()
+                    .detectDiskReads()
+                    .detectDiskWrites()
+                    .detectNetwork() // or .detectAll() for all detectable problems
+                    .penaltyLog()
+                    .build()
+            )
+            StrictMode.setVmPolicy(
+                VmPolicy.Builder()
+                    .detectLeakedSqlLiteObjects()
+                    .detectLeakedClosableObjects()
+                    .penaltyLog()
+                    .penaltyDeath()
+                    .build()
+            )
+        }
+
+
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
@@ -202,7 +219,7 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         when (item.itemId) {
             R.id.action_view_local_ip -> {
                 val fmd = ShowIpDialog()
-                fmd.setIpAddress(getInetAddress(this).toString().removePrefix("/"))
+                fmd.setIpAddress(utils.getInetAddress(this).toString().removePrefix("/"))
                 fmd.showNow(supportFragmentManager, "IP Dialog")
             }
             R.id.action_settings -> {
@@ -218,25 +235,6 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         return super.onOptionsItemSelected(item)
     }
 
-    fun getInetAddress(context: Context): InetAddress {
-        val wifiManager = context.applicationContext
-            .getSystemService(Context.WIFI_SERVICE) as WifiManager
-        return intToInetAddress(wifiManager.dhcpInfo.ipAddress)
-    }
-
-    fun intToInetAddress(hostAddress: Int): InetAddress {
-        val addressBytes = byteArrayOf(
-            (0xff and hostAddress).toByte(),
-            (0xff and (hostAddress shr 8)).toByte(),
-            (0xff and (hostAddress shr 16)).toByte(),
-            (0xff and (hostAddress shr 24)).toByte()
-        )
-        return try {
-            InetAddress.getByAddress(addressBytes)
-        } catch (e: UnknownHostException) {
-            throw AssertionError()
-        }
-    }
 
     class ShowIpDialog : DialogFragment() {
         private var ipAdrs: String = ""

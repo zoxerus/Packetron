@@ -53,9 +53,7 @@ class AboutFragment : Fragment() {
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
-        menu.findItem(R.id.action_connect).isVisible = false
-        menu.findItem(R.id.action_clear_responses).isVisible = false
-        menu.findItem(R.id.message_templates).isVisible = false
+        menu.clear()
         super.onCreateOptionsMenu(menu, inflater)
 
     }

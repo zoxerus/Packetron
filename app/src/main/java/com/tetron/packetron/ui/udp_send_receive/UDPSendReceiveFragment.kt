@@ -17,6 +17,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.observe
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -148,12 +149,10 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
         showHexCB.setOnCheckedChangeListener { _, isChecked ->
             if (isChecked){
                 responseAdapter.useHex(true)
-                responseAdapter.setResponses( udpViewModel.udpResponses )
-
             } else {
                 responseAdapter.useHex(false)
-                responseAdapter.setResponses( udpViewModel.udpResponses )
             }
+            responseAdapter.setResponses( udpViewModel.udpResponses )
         }
 
         hexInputET.onFocusChangeListener = this
@@ -198,10 +197,10 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
         }
 
         udpViewModel.udpResponsesLive.observe(
-            viewLifecycleOwner,
-            {
-                recyclerView.scrollToPosition(udpViewModel.udpResponses.size - 1)
-            })
+            viewLifecycleOwner
+        ) {
+            recyclerView.scrollToPosition(udpViewModel.udpResponses.size - 1)
+        }
 
         recyclerView = view.findViewById<RecyclerView>(R.id.response_recycler_view).apply {
             setHasFixedSize(true)
@@ -247,7 +246,6 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-
             R.id.action_connect -> {
                 createConnectionDialog().showNow(
                     requireActivity().supportFragmentManager,
@@ -319,13 +317,16 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
                     val responseWait = waitMsET.text.toString()
                     val fromServer =
                         preferences!!.getBoolean(getString(R.string.udp_send_from_server), true)
-                    if (resendDelay != "" && resendDelay != "0") {
-                        if (responseWait != "" && responseWait != "0") {
+                    if (resendDelay.isNotEmpty() && resendDelay.toInt() > 0) {
+                        if (resendDelay.toInt() < 100 ){
+                            resendDelayMsET.error = "must be >= 100"
+                            return
+                        }
+                        if (responseWait.isNotEmpty() && responseWait.toInt() > 0) {
                             waitMsET.text = null
                         }
                         resendDelayMsET.text = null
                         stopResends = false
-                        stopResendsBTN.visibility = View.VISIBLE
                         Thread {
                             var lastCall: Long = 0
                             while (!stopResends) {
@@ -366,8 +367,7 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
     }
 
     override fun onFocusChange(v: View?, hasFocus: Boolean) {
-        if (v == null) return
-        when (v.id) {
+        when (v!!.id) {
             R.id.hex_input -> {
                 if (!hasFocus) return
                 if (outMessageET.text.toString() != "") {
@@ -502,7 +502,7 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
                 }
 
             } else {
-                val socket: DatagramSocket = if (outPort == "" || outPort == "0") {
+                val socket: DatagramSocket = if (outPort.isEmpty() || outPort.toInt() <= 0) {
                     DatagramSocket(0, utils.getInetAddress(requireContext().applicationContext))
                 } else {
                     DatagramSocket(
@@ -521,7 +521,7 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
                     udpViewModel.addUdpResponse(protocolMessage)
                 }
                 socket.send(packet)
-                if (responseWait != "" && responseWait != "0") {
+                if (responseWait.isNotEmpty() && responseWait.toInt() > 0 ) {
                     socket.soTimeout = responseWait.toInt()
                     udpListen(socket)
                 }

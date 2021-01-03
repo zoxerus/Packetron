@@ -10,7 +10,7 @@ import java.text.SimpleDateFormat
 @Entity(tableName = "saved_conversations")
 data class ConversationMessage(
     @PrimaryKey val timeId: Long,
-    @ColumnInfo(name = "message") var message: String,
+    @ColumnInfo(name = "message") val message: String,
     @ColumnInfo(name = "direction") val direction: Int,
     @ColumnInfo(name = "receiver_ip") val remoteIp: String,
     @ColumnInfo(name = "out_port") val localPort: String,
