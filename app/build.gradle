@@ -11,8 +11,8 @@ android {
         applicationId "com.tetron.packetron"
         minSdkVersion 16
         targetSdkVersion 30
-        versionCode 21
-        versionName "1.1P"
+        versionCode 23
+        versionName "2.0"
         multiDexEnabled true
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"

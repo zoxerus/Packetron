@@ -36,6 +36,7 @@ import com.tetron.packetron.ui.ResponseAdapter
 import com.tetron.packetron.ui.message_templates.SavedMessageActivity
 import com.tetron.packetron.ui.saved_conversations.SavedConversationActivity
 import com.tetron.packetron.ui.udp_send_receive.LOG_TAG
+import java.io.InputStreamReader
 import java.net.Socket
 
 
@@ -232,6 +233,8 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment(), View.OnClickListe
 
                             Log.e("TCP Client", " button changed status ")
                             toggle.isEnabled = false
+
+
                             if (vm.tcpClientSocket != null && vm.tcpClientSocket!!.isBound) {
                                 try {
                                     vm.tcpClientSocket?.close()
@@ -266,8 +269,9 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment(), View.OnClickListe
                                         )!!.toInt()
                                     )
                                     var length = 0
-                                    val reader = vm.tcpClientSocket!!.getInputStream()
+
                                     try {
+                                        val reader = vm.tcpClientSocket!!.getInputStream()
                                         do {
                                             if (length > 0) {
                                                 val cm = ConversationMessage(
