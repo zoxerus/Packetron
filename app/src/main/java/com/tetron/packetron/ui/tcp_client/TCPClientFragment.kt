@@ -221,20 +221,20 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment(), View.OnClickListe
                 val udpConnectionDialog =
                     ConnectionDialog("Enter Remote IP and address separated by a colon ':' ",
                         tcpClientViewModel.tcpClientAddress,
-                        tcpClientViewModel, { vm, button ->
+                        tcpClientViewModel,
+                        { vm, button ->
                             if (vm.tcpClientSocket != null && vm.tcpClientSocket!!.isBound) {
                                 button.isChecked = true
                             }
-                        },
+                        })
+                        /// toggle button OnCheckedChange
                         { vm, address, toggle, editText ->
+                            // set the last used address in the address input of the dialogue
                             if (sharedPreferences.getBoolean("tcp_client_remember_hosts", true)) {
                                 tcpClientViewModel.tcpClientAddress = address
                             }
-
-                            Log.e("TCP Client", " button changed status ")
+                            // disable the toggle button until the connection is established
                             toggle.isEnabled = false
-
-
                             if (vm.tcpClientSocket != null && vm.tcpClientSocket!!.isBound) {
                                 try {
                                     vm.tcpClientSocket?.close()
@@ -248,19 +248,13 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment(), View.OnClickListe
                                         val ip = address.split(":").first()
                                         val port = address.split(":").last()
                                         vm.tcpClientSocket = Socket(ip, port.toInt())
-
+                                        vm.tcpClientSocket!!.soTimeout = 2000
                                     } catch (e: Exception) {
                                         vm.tcpClientSocket = null
                                         e.printStackTrace()
                                         requireActivity().runOnUiThread {
                                             toggle.isChecked = false
-                                            editText.error = " Cannot connect "
-                                            Toast.makeText(
-                                                context,
-                                                "check IP and Port",
-                                                Toast.LENGTH_LONG
-                                            )
-                                                .show()
+                                            editText.error = "check IP and Port"
                                         }
                                     }
                                     val message = ByteArray(
@@ -269,14 +263,14 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment(), View.OnClickListe
                                         )!!.toInt()
                                     )
                                     var length = 0
-
                                     try {
                                         val reader = vm.tcpClientSocket!!.getInputStream()
                                         do {
                                             if (length > 0) {
                                                 val cm = ConversationMessage(
                                                     timeId = System.currentTimeMillis(),
-                                                    message = String(message, 0, length), direction = 1,
+                                                    message = String(message, 0, length),
+                                                    direction = 1,
                                                     localPort = vm.tcpClientSocket!!.localPort.toString(),
                                                     localIp = vm.tcpClientSocket!!.localAddress.toString()
                                                         .removePrefix("/"),
@@ -287,22 +281,25 @@ class TCPClientFragment(vm: ConnectionViewModel) : Fragment(), View.OnClickListe
                                                 cm.socket = vm.tcpClientSocket
                                                 vm.addTcpClientResponse(cm)
                                             }
-                                            length = reader.read(message)
+                                            length = try {
+                                                reader.read(message, 0, message.size)
+                                            } catch (e: Exception) {
+                                                0
+                                            }
                                         } while (vm.tcpClientSocket != null && length != -1)
                                     } catch (e: Exception) {
                                         e.printStackTrace()
                                     }
                                     try {
                                         vm.tcpClientSocket?.close()
-                                        vm.tcpClientSocket = null
                                     } catch (e: Exception) {
                                         e.printStackTrace()
                                     }
-
+                                    vm.tcpClientSocket = null
                                 }.start()
                             }
                             toggle.isEnabled = true
-                        })
+                        }
                 udpConnectionDialog.showNow(
                     requireActivity().supportFragmentManager,
                     "Connection Dialog"

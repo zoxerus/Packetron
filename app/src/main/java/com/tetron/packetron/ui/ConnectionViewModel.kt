@@ -7,12 +7,13 @@ import com.tetron.packetron.db.conversations.ConversationMessage
 import java.net.DatagramSocket
 import java.net.ServerSocket
 import java.net.Socket
+import kotlin.jvm.Throws
 
 class ConnectionViewModel(application: Application) : AndroidViewModel(application) {
-    var udpRemoteAddresses = mutableListOf<String>()
-    var udpLocalPort = "33333"
-    var localTcpPort = "33333"
-    var tcpClientAddress = "127.0.0.1:33333"
+    var udpRemoteAddresses = mutableListOf<String>()    // a list of remote addresses for remote address spinner
+    var udpLocalPort = "33333"                          // default port of UDP Server
+    var localTcpPort = "33333"      // default port for TCP Server
+    var tcpClientAddress = "127.0.0.1:33333"    // default address for the TCP Client
 
     var udpSocket: DatagramSocket? = null
     var tcpServerSocket: ServerSocket? = null
@@ -63,6 +64,13 @@ class ConnectionViewModel(application: Application) : AndroidViewModel(applicati
         tcpClientResponses.add(pm)
         tcpClientResponsesLive.postValue(tcpClientResponses)
     }
+
+    @Synchronized
+    fun clearTcpClients() {
+        tcpClients.clear()
+        tcpClientsLive.postValue(tcpClients)
+    }
+
 
     @Synchronized
     fun updateTcpClients(s: Socket?, op: Int) {

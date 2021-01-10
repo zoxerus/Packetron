@@ -9,7 +9,8 @@
     tools:context=".ui.message_templates.SavedMessageActivity">
 
     <EditText
-        android:background="@drawable/round_corner_rectangle"
+        style="@style/EditTextV21"
+        android:backgroundTint="@color/accent1"
         android:id="@+id/et_add_message_template"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -27,6 +28,7 @@
         android:autofillHints="Message Template Text" />
 
     <Button
+        style="@android:style/Widget.Holo.Button"
         android:id="@+id/bt_add_message_template"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -39,6 +41,7 @@
         app:layout_constraintTop_toTopOf="@id/et_add_message_template"/>
 
     <Button
+        style="@android:style/Widget.Holo.Button"
         android:id="@+id/bt_cancel_message_template"
         android:layout_width="0dp"
         android:layout_height="wrap_content"

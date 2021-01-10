@@ -61,23 +61,23 @@
             android:autofillHints="HEX Input"
             android:background="@drawable/round_corner_rectangle"
             android:digits="abcdefABCDEF0123456789"
-            android:hint="Hex"
-            android:paddingHorizontal="5dp"
+            android:hint="@string/hex"
+            android:paddingHorizontal="7dp"
             android:paddingVertical="5dp"
             android:textColor="@android:color/black"
-            android:textSize="12sp"
             app:layout_constraintBottom_toTopOf="@id/repeat_text"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            tools:text="48 49" />
+            tools:text="48 49"
+            android:inputType="textCapCharacters" />
 
         <TextView
             android:id="@+id/repeat_text"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
-            android:text="Resend delay ms"
+            android:text="@string/resend_delay_ms"
             android:textAlignment="center"
             android:textColor="@color/text1"
             android:textSize="12sp"
@@ -94,7 +94,7 @@
             android:background="@drawable/round_corner_rectangle"
             android:digits="0123456789"
             android:gravity="center_horizontal"
-            android:hint="No Resend"
+            android:hint="@string/no_resend"
             android:inputType="number"
             android:lines="1"
             android:paddingHorizontal="7dp"
@@ -104,14 +104,15 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="@id/repeat_text"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/repeat_text" />
+            app:layout_constraintTop_toBottomOf="@id/repeat_text"
+            android:autofillHints="@string/repeat_ms_afh" />
 
         <Button
             android:id="@+id/stop_resends"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:lines="2"
-            android:text="Stop Resends"
+            android:text="@string/stop_resends"
             android:textSize="12sp"
             app:layout_constraintBottom_toBottomOf="@id/repeat_ms"
             app:layout_constraintStart_toEndOf="@id/repeat_ms"
@@ -121,8 +122,8 @@
             android:id="@+id/cb_show_hex"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:buttonTint="@color/text1"
-            android:text="Show Hex"
+
+            android:text="@string/show_hex"
             android:textColor="@color/text1"
             app:layout_constraintBottom_toBottomOf="@id/stop_resends"
             app:layout_constraintStart_toEndOf="@id/stop_resends"

@@ -5,4 +5,10 @@
         <item name="windowNoTitle">true</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
+
+    <style name="EditTextV21">
+        <item name="android:backgroundTint">@android:color/white</item>
+        <item name="android:textColor">@android:color/white</item>
+        <item name="android:textColorHint">@color/accent0</item>
+    </style>
 </resources>

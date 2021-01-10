@@ -50,6 +50,24 @@
     <string name="delete_all">Delete All</string>
     <string name="save_this_conversation">Save this Conversation</string>
     <string name="show_saved_conversations">Show Saved Conversations</string>
+    <string name="response_wait_ms">Response Wait (ms)</string>
+    <string name="no_resend">No Resend</string>
+    <string name="out_port">Out Port</string>
+    <string name="resend_interval_ms">Resend Interval (ms)</string>
+    <string name="hex">Hex</string>
+    <string name="random">Random</string>
+    <string name="no_wait">No Wait</string>
+    <string name="stop_resends">Stop Resends</string>
+    <string name="show_hex">Show Hex</string>
+    <string name="response_wait_afh">Response wait in milliseconds</string>
+    <string name="out_port_afh">Outbound Port Number</string>
+    <string name="repeat_ms_afh">repeat interval in milliseconds</string>
+    <string name="advanced">Advanced</string>
+    <string name="resend_delay_ms">Resend delay ms</string>
+    <string name="about_me">About Me</string>
+    <string name="about">About</string>
+    <!-- -->
+
 
 
 </resources>

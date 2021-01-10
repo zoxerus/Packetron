@@ -223,70 +223,59 @@ class TCPServerFragment(vm: ConnectionViewModel) : Fragment(), View.OnClickListe
                         tcpViewModel.localTcpPort,
                         tcpViewModel,
                         { vm, button ->
-                            if (vm.tcpServerSocket != null && vm.tcpServerSocket!!.isBound) {
-                                button.isChecked = true
-                            }
-                        },
-                        { vm, port, toggle, editText ->
-
-                            Log.e("TCP SERVER", " button changed status ")
-                            toggle.isEnabled = false
-                            if (vm.tcpServerSocket != null && vm.tcpServerSocket!!.isBound) {
+                            button.isChecked = vm.tcpServerSocket != null && vm.tcpServerSocket!!.isBound
+                        } )
+                    // on button checkedChangeListener
+                    { vm, port, toggle, editText ->
+                        if (toggle.isChecked){
+                            Thread {
                                 try {
-                                    vm.tcpServerSocket!!.close()
-                                    vm.tcpServerSocket = null
+                                    vm.tcpServerSocket = ServerSocket(port.toInt())
                                 } catch (e: Exception) {
+                                    vm.tcpServerSocket = null
+                                    vm.clearTcpClients()
                                     e.printStackTrace()
-                                }
-                            } else {
-                                Thread {
-                                    try {
-                                        vm.tcpServerSocket = ServerSocket(port.toInt())
-                                    } catch (e: Exception) {
-                                        vm.tcpServerSocket = null
-                                        vm.tcpClients.clear()
-                                        e.printStackTrace()
-                                        requireActivity().runOnUiThread {
-                                            toggle.isChecked = false
-                                            editText.error = " Cannot bind to port "
-                                            Toast.makeText(
-                                                context,
-                                                "Error",
-                                                Toast.LENGTH_LONG
-                                            )
-                                                .show()
-                                        }
+                                    requireActivity().runOnUiThread {
+                                        toggle.isChecked = false
+                                        editText.error = " Cannot bind to port "
                                     }
-                                    do {
-                                        try {
-                                            val client: Socket? = vm.tcpServerSocket?.accept()
-                                            if (
-                                                client != null
-                                                && tcpClientAdapter.getPosition(client) == -1
-                                            ) {
-                                                vm.updateTcpClients(client, 0)
-                                            }
-
-                                            val clientHandler =
-                                                TCPClientHandler(
-                                                    tcpViewModel,
-                                                    sharedPreferences!!.getString(
-                                                        getString(R.string.tcp_server_in_buffer),
-                                                        "255"
-                                                    )!!.toInt(),
-                                                    client!!
-                                                )
-                                            clientHandler.start()
-
-
-                                        } catch (e: Exception) {
-                                            e.printStackTrace()
+                                }
+                                do {
+                                    try {
+                                        val client: Socket? = vm.tcpServerSocket?.accept()
+                                        if (
+                                            client != null
+                                            && tcpClientAdapter.getPosition(client) == -1
+                                        ) {
+                                            vm.updateTcpClients(client, 0)
                                         }
-                                    } while (vm.tcpServerSocket != null && vm.tcpServerSocket!!.isBound)
-                                }.start()
+
+                                        val clientHandler =
+                                            TCPClientHandler(
+                                                tcpViewModel,
+                                                sharedPreferences!!.getString(
+                                                    getString(R.string.tcp_server_in_buffer),
+                                                    "255"
+                                                )!!.toInt(),
+                                                client!!
+                                            )
+                                        clientHandler.start()
+                                    } catch (e: Exception) {
+                                        e.printStackTrace()
+                                    }
+                                } while (vm.tcpServerSocket != null && vm.tcpServerSocket!!.isBound )
+                            }.start()
+                        } else {
+                            try {
+                                vm.tcpServerSocket!!.close()
+                                vm.tcpServerSocket = null
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                                //vm.clearTcpClients()
+                                vm.tcpServerSocket = null
                             }
-                            toggle.isEnabled = true
-                        })
+                        }
+                    }
                 udpConnectionDialog.showNow(
                     requireActivity().supportFragmentManager,
                     "Connection Dialog"

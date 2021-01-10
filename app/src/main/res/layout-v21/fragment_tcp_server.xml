@@ -12,17 +12,19 @@
 
 
     <Spinner
+        style="@android:style/Widget.Spinner"
         android:layout_width="0dp"
         android:id="@+id/tcp_address_spinner"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="15dp"
-        android:background="@drawable/round_corner_rectangle"
+        android:layout_marginBottom="5dp"
         app:layout_constraintEnd_toStartOf="@id/cb_show_advanced_controls"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/message_to_send"
         app:layout_constraintTop_toBottomOf="@id/response_recycler_view"
-        tools:listitem="@android:layout/simple_spinner_dropdown_item"/>
+        tools:listitem="@android:layout/simple_spinner_dropdown_item"
+        />
     <CheckBox
+        android:buttonTint="@color/text1"
         android:textColor="@color/text1"
         android:text="@string/advanced"
         android:id="@+id/cb_show_advanced_controls"
@@ -36,9 +38,9 @@
         />
 
     <EditText
+        style="@style/EditTextV21"
         android:id="@+id/message_to_send"
         android:layout_width="0dp"
-        android:background="@drawable/round_corner_rectangle"
         android:lines="2"
         android:layout_height="wrap_content"
         android:layout_marginVertical="5dp"
@@ -58,10 +60,10 @@
 
     <Button
         android:id="@+id/send_button"
+        style="@android:style/Widget.Holo.Button"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginStart="15dp"
-        android:layout_marginLeft="15dp"
         android:text="@string/send"
         app:layout_constraintBottom_toBottomOf="@id/message_to_send"
         app:layout_constraintEnd_toEndOf="parent"
@@ -81,16 +83,14 @@
         tools:visibility="visible">
 
         <EditText
+            style="@style/EditTextV21"
             android:id="@+id/hex_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:autofillHints="HEX Input"
-            android:background="@drawable/round_corner_rectangle"
             android:digits="abcdefABCDEF0123456789"
             android:hint="@string/hex"
             android:paddingHorizontal="5dp"
-            android:paddingVertical="5dp"
-            android:textColor="@android:color/black"
             app:layout_constraintBottom_toTopOf="@id/repeat_text"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -103,7 +103,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
-            android:text="@string/resend_delay_ms"
+            android:text="@string/resend_interval_ms"
             android:textAlignment="center"
             android:textColor="@color/text1"
             android:textSize="12sp"
@@ -113,17 +113,16 @@
             app:layout_constraintTop_toBottomOf="@id/hex_input" />
 
         <EditText
+            style="@style/EditTextV21"
             android:id="@+id/repeat_ms"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:background="@drawable/round_corner_rectangle"
             android:digits="0123456789"
             android:gravity="center_horizontal"
             android:hint="@string/no_resend"
             android:inputType="number"
             android:lines="1"
             android:paddingHorizontal="7dp"
-            android:paddingVertical="5dp"
             android:textAlignment="center"
             android:textSize="14sp"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -147,6 +146,7 @@
             android:id="@+id/cb_show_hex"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:buttonTint="@color/text1"
             android:text="@string/show_hex"
             android:textColor="@color/text1"
             app:layout_constraintBottom_toBottomOf="@id/stop_resends"

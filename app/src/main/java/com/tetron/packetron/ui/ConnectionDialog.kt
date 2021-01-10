@@ -47,8 +47,7 @@ class ConnectionDialog(
                     connectionViewModel,
                     localPortET.text.toString(),
                     connectToggle,
-                    localPortET
-                )
+                    localPortET )
             }
 
             builder.create()

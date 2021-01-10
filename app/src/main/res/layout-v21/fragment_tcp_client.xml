@@ -5,42 +5,17 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background"
-
     android:orientation="horizontal"
     android:padding="10dp"
     tools:context="ui.udp_send_receive.UDPSendReceiveFragment">
 
 
-    <Spinner
-        android:layout_width="0dp"
-        android:id="@+id/tcp_address_spinner"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="15dp"
-        android:background="@drawable/round_corner_rectangle"
-        app:layout_constraintEnd_toStartOf="@id/cb_show_advanced_controls"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintBottom_toTopOf="@+id/message_to_send"
-        app:layout_constraintTop_toBottomOf="@id/response_recycler_view"
-        tools:listitem="@android:layout/simple_spinner_dropdown_item"/>
-    <CheckBox
-        android:textColor="@color/text1"
-        android:text="@string/advanced"
-        android:id="@+id/cb_show_advanced_controls"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="@id/tcp_address_spinner"
-        app:layout_constraintTop_toTopOf="@id/tcp_address_spinner"
-        app:layout_constraintStart_toEndOf="@id/tcp_address_spinner"
-
-        />
-
     <EditText
+        style="@style/EditTextV21"
         android:id="@+id/message_to_send"
         android:layout_width="0dp"
-        android:background="@drawable/round_corner_rectangle"
-        android:lines="2"
         android:layout_height="wrap_content"
+        android:lines="3"
         android:layout_marginVertical="5dp"
         android:layout_marginTop="15dp"
         android:autofillHints="@string/type_a_message"
@@ -49,31 +24,30 @@
         android:paddingHorizontal="7dp"
         android:maxLength="255"
         android:scrollbars="vertical"
-        app:layout_constraintTop_toBottomOf="@id/tcp_address_spinner"
         app:layout_constraintBottom_toTopOf="@id/advanced_controls_layout"
         app:layout_constraintEnd_toStartOf="@id/send_button"
         app:layout_constraintHorizontal_weight=".8"
+        app:layout_constraintTop_toBottomOf="@id/response_recycler_view"
         app:layout_constraintStart_toStartOf="parent" />
 
 
     <Button
+        style="@android:style/Widget.Holo.Button"
         android:id="@+id/send_button"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginStart="15dp"
-        android:layout_marginLeft="15dp"
         android:text="@string/send"
         app:layout_constraintBottom_toBottomOf="@id/message_to_send"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/message_to_send"
         app:layout_constraintHorizontal_weight=".2"
+        app:layout_constraintTop_toTopOf="@id/message_to_send"
         app:layout_constraintStart_toEndOf="@id/message_to_send" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/advanced_controls_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -81,16 +55,14 @@
         tools:visibility="visible">
 
         <EditText
+            style="@style/EditTextV21"
             android:id="@+id/hex_input"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:autofillHints="HEX Input"
-            android:background="@drawable/round_corner_rectangle"
             android:digits="abcdefABCDEF0123456789"
             android:hint="@string/hex"
             android:paddingHorizontal="5dp"
-            android:paddingVertical="5dp"
-            android:textColor="@android:color/black"
             app:layout_constraintBottom_toTopOf="@id/repeat_text"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -103,7 +75,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
-            android:text="@string/resend_delay_ms"
+            android:text="@string/resend_interval_ms"
             android:textAlignment="center"
             android:textColor="@color/text1"
             android:textSize="12sp"
@@ -113,17 +85,16 @@
             app:layout_constraintTop_toBottomOf="@id/hex_input" />
 
         <EditText
+            style="@style/EditTextV21"
             android:id="@+id/repeat_ms"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:background="@drawable/round_corner_rectangle"
             android:digits="0123456789"
             android:gravity="center_horizontal"
             android:hint="@string/no_resend"
             android:inputType="number"
             android:lines="1"
             android:paddingHorizontal="7dp"
-            android:paddingVertical="5dp"
             android:textAlignment="center"
             android:textSize="14sp"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -147,6 +118,7 @@
             android:id="@+id/cb_show_hex"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:buttonTint="@color/text1"
             android:text="@string/show_hex"
             android:textColor="@color/text1"
             app:layout_constraintBottom_toBottomOf="@id/stop_resends"
@@ -157,11 +129,12 @@
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/response_recycler_view"
+        android:layout_marginBottom="10dp"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_marginVertical="5dp"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        app:layout_constraintBottom_toTopOf="@id/tcp_address_spinner"
+        app:layout_constraintBottom_toTopOf="@id/send_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"

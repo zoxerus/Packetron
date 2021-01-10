@@ -15,7 +15,7 @@
             app:title="Show Sent Messages " />
 
         <SwitchPreferenceCompat
-            app:defaultValue="true"
+            app:defaultValue="false"
             app:key="@string/udp_send_from_server"
             app:title="Send from UDP Server Port " />
 

@@ -17,7 +17,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.observe
 import androidx.preference.PreferenceManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -38,14 +37,25 @@ import java.net.*
 const val LOG_TAG: String = "UDP_SEND_RECEIVE"
 
 class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
-    SharedPreferences.OnSharedPreferenceChangeListener, View.OnClickListener, View.OnFocusChangeListener {
+    SharedPreferences.OnSharedPreferenceChangeListener, View.OnClickListener,
+    View.OnFocusChangeListener {
 
     /*/* Global Variables */*/
     private var stopResends = false
 
+    // to get a message template from MessageTemplates Activity
+    private val startForResult =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val intent = result.data
+                udpViewModel.udpMessageToSend =
+                    intent?.getStringExtra(getString(R.string.selected_message_template))!!
+            }
+        }
+
     /*/* Shared Preferences */*/
-    private var ipPref: SharedPreferences? = null
-    private var preferences: SharedPreferences? = null
+    private var savedStatus: SharedPreferences? = null
+    private var settings: SharedPreferences? = null
 
     /*/* Adapters and Managers */*/
     private val utils = ConnectionUtils()
@@ -78,22 +88,16 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
         }
     }
 
-    // to get a message template from MessageTemplates Activity
-    private val startForResult =
-        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                val intent = result.data
-                udpViewModel.udpMessageToSend =
-                    intent?.getStringExtra(getString(R.string.selected_message_template))!!
-            }
-        }
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         setHasOptionsMenu(true)
-        preferences =
+        savedStatus = activity?.getSharedPreferences(
+            "ip_preferences", Context.MODE_PRIVATE
+        )
+
+        settings =
             PreferenceManager.getDefaultSharedPreferences(requireContext().applicationContext)
-        preferences!!.registerOnSharedPreferenceChangeListener(this)
+        settings!!.registerOnSharedPreferenceChangeListener(this)
+
         conversationViewModel = ViewModelProvider(this).get(ConversationViewModel::class.java)
 
         super.onCreate(savedInstanceState)
@@ -103,8 +107,7 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
         super.onResume()
         requireActivity().title = "UDP Sender Receiver"
 
-        udpViewModel.udpLocalPort = ipPref!!.getString("local_port", "33333")!!
-        if (preferences!!.getBoolean(getString(R.string.udp_send_from_server), true)) {
+        if (settings!!.getBoolean(getString(R.string.udp_send_from_server), true)) {
             outPortNumET.setText(udpViewModel.udpLocalPort)
             outPortNumET.isEnabled = false
         }
@@ -116,52 +119,20 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-
-        ipPref = activity?.getSharedPreferences(
-            "ip_preferences", Context.MODE_PRIVATE
-        )
         return inflater.inflate(R.layout.fragment_udp_send_receive, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         /*/* Assign the Views */*/
-        remoteHost = view.findViewById(R.id.remote_address_and_port)
-        outPortNumET =  view.findViewById(R.id.out_port_num)
-        outMessageET = view.findViewById(R.id.message_to_send)
-        sendBTN = view.findViewById(R.id.send_button)
-        stopResendsBTN = view.findViewById(R.id.stop_resends)
-        waitMsET = view.findViewById(R.id.response_wait_ms)
-        resendDelayMsET = view.findViewById(R.id.repeat_ms)
-        hexInputET = view.findViewById(R.id.hex_input)
-        showAdvancedControlsCB = view.findViewById(R.id.cb_show_advanced_controls)
-        advancedControlsLayout = view.findViewById(R.id.advanced_controls_layout)
-        showHexCB = view.findViewById(R.id.cb_show_hex)
+        assignViews(view)
 
-        /*/* set listeners for the checkboxes */*/
-        showAdvancedControlsCB.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked) {
-                advancedControlsLayout.visibility = View.VISIBLE
-            } else {
-                advancedControlsLayout.visibility = View.GONE
-            }
-        }
-        showHexCB.setOnCheckedChangeListener { _, isChecked ->
-            if (isChecked){
-                responseAdapter.useHex(true)
-            } else {
-                responseAdapter.useHex(false)
-            }
-            responseAdapter.setResponses( udpViewModel.udpResponses )
-        }
+        udpViewModel.udpLocalPort = savedStatus!!.getString("local_port", "33333")!!
 
-        hexInputET.onFocusChangeListener = this
-        outMessageET.onFocusChangeListener = this
-
-        if (ipPref!!.getStringSet("addresses", null) != null) {
+        if (savedStatus!!.getStringSet("addresses", null) != null) {
             udpViewModel.udpRemoteAddresses.clear()
             udpViewModel.udpRemoteAddresses.addAll(
-                ipPref!!.getStringSet(
+                savedStatus!!.getStringSet(
                     "addresses",
                     setOf("127.0.0.1:33333")
                 )!!.toMutableList()
@@ -176,9 +147,9 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
         remoteHost.setAdapter(addressAdapter)
 
         viewManager = LinearLayoutManager(requireContext().applicationContext)
-        // specify the behaviour when the user clicks a message from the message list
-        responseAdapter = ResponseAdapter( udpViewModel.udpResponses ) { item ->
 
+        // specify the behaviour when the user clicks a message from the message list
+        responseAdapter = ResponseAdapter(udpViewModel.udpResponses) { item ->
             // specify the behaviour when user clicks the positive button of the reply dialogue
             MessageDialog("Enter a Reply", "Send") {
                 outMessageET.text = null
@@ -209,9 +180,9 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
 
         }
 
-        /*/* Set onClick Listeners */*/
-        sendBTN.setOnClickListener(this)
-        stopResendsBTN.setOnClickListener(this)
+        /*/* Set the Listeners   */*/
+        setListeners()
+
     }
 
 
@@ -223,7 +194,7 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
             }
             key.equals("udp_remember_hosts") -> {
                 if (!sharedPreferences!!.getBoolean(key, true)) {
-                    ipPref!!.edit().remove("addresses").apply()
+                    savedStatus!!.edit().remove("addresses").apply()
                     udpViewModel.udpRemoteAddresses.clear()
                     addressAdapter.clear()
                     addressAdapter.notifyDataSetChanged()
@@ -266,8 +237,9 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
             R.id.mm_action_save_conversation -> {
                 // specify the behaviour when user clicks the positive button of the reply dialogue
                 MessageDialog("Enter a Name", "Save") {
-                    if (udpViewModel.udpResponsesLive.value != null && udpViewModel.udpResponsesLive.value!!.isNotEmpty()){
-                        val msgs = ConversationsTable(name = it,
+                    if (udpViewModel.udpResponsesLive.value != null && udpViewModel.udpResponsesLive.value!!.isNotEmpty()) {
+                        val msgs = ConversationsTable(
+                            name = it,
                             fromTime = udpViewModel.udpResponsesLive.value!![0].timeId,
                             toTime = udpViewModel.udpResponsesLive.value!![udpViewModel.udpResponsesLive.value!!.size - 1].timeId
                         )
@@ -290,7 +262,7 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
     override fun onPause() {
         super.onPause()
         udpViewModel.udpMessageToSend = outMessageET.text.toString()
-        with(ipPref!!.edit()) {
+        with(savedStatus!!.edit()) {
             putString("local_port", udpViewModel.udpLocalPort)
             putStringSet("addresses", udpViewModel.udpRemoteAddresses.toSet())
             apply()
@@ -316,9 +288,10 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
                     val outPort = outPortNumET.text.toString()
                     val responseWait = waitMsET.text.toString()
                     val fromServer =
-                        preferences!!.getBoolean(getString(R.string.udp_send_from_server), true)
+                        settings!!.getBoolean(getString(R.string.udp_send_from_server), true)
+                    /*/* set minimum allowed interval to 100 ms */*/
                     if (resendDelay.isNotEmpty() && resendDelay.toInt() > 0) {
-                        if (resendDelay.toInt() < 100 ){
+                        if (resendDelay.toInt() < 100) {
                             resendDelayMsET.error = "must be >= 100"
                             return
                         }
@@ -383,7 +356,8 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
                     var hex = hexInputET.text.toString().replace("\\s".toRegex(), "")
                     val output = StringBuilder()
                     var i = 0
-                    if (hex.length % 2 !=0) { hex = "0$hex"
+                    if (hex.length % 2 != 0) {
+                        hex = "0$hex"
                     }
                     while (i < hex.length) {
                         val str: String = hex.substring(i, i + 2)
@@ -446,7 +420,7 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
     /*/* Listen for upd Packets */*/
     private fun udpListen(soc: DatagramSocket?) {
         val msg = ByteArray(
-            preferences!!
+            settings!!
                 .getString("udp_in_buffer", "255")!!.toInt()
         )
         val packet = DatagramPacket(msg, msg.size)
@@ -487,7 +461,7 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
                     )
 
                     udpViewModel.udpSocket!!.send(packet)
-                    if (preferences!!.getBoolean("udp_show_sent", false)) {
+                    if (settings!!.getBoolean("udp_show_sent", false)) {
                         udpViewModel.addUdpResponse(protocolMessage)
                     }
                 } else {
@@ -510,7 +484,7 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
                         utils.getInetAddress(requireContext().applicationContext)
                     )
                 }
-                if (preferences!!.getBoolean("udp_show_sent", false)) {
+                if (settings!!.getBoolean("udp_show_sent", false)) {
                     val protocolMessage = ConversationMessage(
                         timeId = System.currentTimeMillis(),
                         direction = 0,
@@ -521,7 +495,7 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
                     udpViewModel.addUdpResponse(protocolMessage)
                 }
                 socket.send(packet)
-                if (responseWait.isNotEmpty() && responseWait.toInt() > 0 ) {
+                if (responseWait.isNotEmpty() && responseWait.toInt() > 0) {
                     socket.soTimeout = responseWait.toInt()
                     udpListen(socket)
                 }
@@ -529,7 +503,7 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
                 socket.close()
             }
             val address = remoteHost.text.toString()
-            if (preferences!!.getBoolean("udp_remember_hosts", true)
+            if (settings!!.getBoolean("udp_remember_hosts", true)
                 && !udpViewModel.udpRemoteAddresses.contains(address)
             ) {
                 udpViewModel.udpRemoteAddresses.add(address)
@@ -552,7 +526,7 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
             }
         } catch (e: SocketTimeoutException) {
             Log.e(LOG_TAG, "message", e)
-            if (preferences!!.getBoolean("toast_not_received", false)) {
+            if (settings!!.getBoolean("toast_not_received", false)) {
                 requireActivity().runOnUiThread {
                     Toast.makeText(
                         requireContext().applicationContext,
@@ -582,6 +556,43 @@ class UDPSendReceiveFragment(vm: ConnectionViewModel) : Fragment(),
             }
         }
         return 1
+    }
+
+    private fun assignViews(view: View){
+        remoteHost = view.findViewById(R.id.remote_address_and_port)
+        outPortNumET = view.findViewById(R.id.out_port_num)
+        outMessageET = view.findViewById(R.id.message_to_send)
+        sendBTN = view.findViewById(R.id.send_button)
+        stopResendsBTN = view.findViewById(R.id.stop_resends)
+        waitMsET = view.findViewById(R.id.response_wait_ms)
+        resendDelayMsET = view.findViewById(R.id.repeat_ms)
+        hexInputET = view.findViewById(R.id.hex_input)
+        showAdvancedControlsCB = view.findViewById(R.id.cb_show_advanced_controls)
+        advancedControlsLayout = view.findViewById(R.id.advanced_controls_layout)
+        showHexCB = view.findViewById(R.id.cb_show_hex)
+    }
+
+    private fun setListeners(){
+        showAdvancedControlsCB.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                advancedControlsLayout.visibility = View.VISIBLE
+            } else {
+                advancedControlsLayout.visibility = View.GONE
+            }
+        }
+        showHexCB.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                responseAdapter.useHex(true)
+            } else {
+                responseAdapter.useHex(false)
+            }
+            responseAdapter.setResponses(udpViewModel.udpResponses)
+        }
+        hexInputET.onFocusChangeListener = this
+        outMessageET.onFocusChangeListener = this
+        /*/* Set onClick Listeners */*/
+        sendBTN.setOnClickListener(this)
+        stopResendsBTN.setOnClickListener(this)
     }
 }
 
